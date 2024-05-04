@@ -162,7 +162,6 @@ class PipelineService : Service(), CoroutineScope {
                         }
                         FriendManager.updateLocation(update.userId, update.location, update.world.name)
                     }
-                    FriendManager.updateLocation(update.userId, update.location, update.world.name)
                 }
 
                 is FriendUpdate -> {
@@ -216,7 +215,7 @@ class PipelineService : Service(), CoroutineScope {
 
                     if (preferences.richPresenceEnabled) {
                         launch {
-                            val instance = api?.getInstance(user.location)
+                            val instance = api.getInstance(user.location)
                             if (status == StatusHelper.Status.Active || status == StatusHelper.Status.JoinMe) {
                                 instance?.world?.name?.let { gateway?.sendPresence(it, "${location.instanceType} #${instance.name} ${if (BuildConfig.FLAVOR == "quest") { "(VR)" } else { "(Mobile)" }} (${instance.nUsers} of ${instance.capacity})", instance.world.imageUrl, status) }
                             } else {
@@ -278,7 +277,7 @@ class PipelineService : Service(), CoroutineScope {
 
                     launch {
                         withContext(Dispatchers.Main) {
-                            val sender = api?.getUser(notification.senderUserId)
+                            val sender = api.getUser(notification.senderUserId)
 
                             when (notification.type) {
                                 "friendRequest" -> {
@@ -323,16 +322,16 @@ class PipelineService : Service(), CoroutineScope {
         launch {
             val friends: MutableList<LimitedUser> = ArrayList()
 
-            api?.getFriends()?.let { friends += it }
-            api?.getFriends(true)?.let { friends += it }
+            api.getFriends()?.let { friends += it }
+            api.getFriends(true)?.let { friends += it }
 
-            val favorites = api?.getFavorites("friend")
+            val favorites = api.getFavorites("friend")
 
             for (friend in friends) {
                 friend.location.let { intent ->
                     if (intent.contains("wrld_")) {
                         val info = LocationHelper.parseLocationInfo(friend.location)
-                        api?.getWorld(info.worldId)?.let { friend.worldName = it.name }
+                        api.getWorld(info.worldId)?.let { friend.worldName = it.name }
                     } else {
                         friend.worldName = ""
                     }
@@ -342,7 +341,7 @@ class PipelineService : Service(), CoroutineScope {
             }
 
             FriendManager.setFriends(friends).also {
-                api?.getAuth()?.let { token ->
+                api.getAuth()?.let { token ->
                     pipeline = VRChatPipeline(token)
                     pipeline?.connect()
                     pipeline?.setListener(listener)
