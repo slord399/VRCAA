@@ -61,12 +61,15 @@ jobs:
       env:
         BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
 
+    - name: set env
+      run: echo "::set-env name=NOW::v$(date +'%Y%m%d.%H%M%S')"
+
 
     - name: Publish release to Github
       uses: marvinpinto/action-automatic-releases@latest
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "transcript-latest"
+        automatic_release_tag: "transcript-latest ${{ env.NOW }}"
         prerelease: false
         title: "${{ env.GITHUB_SHA }}"
         files: |
