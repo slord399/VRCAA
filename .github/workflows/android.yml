@@ -61,8 +61,8 @@ jobs:
       env:
         BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
 
-    - name: set env
-      run: echo "::set-env name=NOW::v$(date +'%Y%m%d.%H%M%S')"
+    - name: Set Date as Enviroment Variable
+      run: echo “NOW=$(date +’%Y.%m.%d’)” >> $GITHUB_ENV
 
 
     - name: Publish release to Github
