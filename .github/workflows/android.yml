@@ -61,9 +61,10 @@ jobs:
       env:
         BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
 
-      - name: Generate CalVer version
-        id: calver
-        run: |
+
+    - name: Generate CalVer version
+      id: calver
+      run: |
           TODAY=$(date "+%Y-%m-%d")
 
           RELEASE_TAG=$(gh release --repo ${{github.repository}} view --json tagName --jq .tagName)
@@ -88,16 +89,16 @@ jobs:
 
           echo ::set-output name=version::${VERSION}
           echo "Version set to ${VERSION}"
-        env:
+      env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION_PREFIX: "v"
           TZ: "Asia/Tokyo"
-      - uses: release-drafter/release-drafter@v5
-        with:
+    - uses: release-drafter/release-drafter@v5
+      with:
           tag: ${{ steps.calver.outputs.version }}
           name: ${{ steps.calver.outputs.version }}
           version: ${{ steps.calver.outputs.version }}
-        env:
+      env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Publish release to Github
@@ -110,7 +111,7 @@ jobs:
         files: |
           ${{ steps.sign_standard.outputs.signedReleaseFile }}
           ${{ steps.sign_quest.outputs.signedReleaseFile }}
-        env:
+      env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
