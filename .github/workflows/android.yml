@@ -75,3 +75,6 @@ jobs:
         files: |
           ${{ steps.sign_standard.outputs.signedReleaseFile }}
           ${{ steps.sign_quest.outputs.signedReleaseFile }}
+           env:
+            NOW: ${{ env.NOW }}
+
