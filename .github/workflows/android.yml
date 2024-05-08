@@ -61,20 +61,56 @@ jobs:
       env:
         BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
 
-    - name: Set Date as Enviroment Variable
-      run: echo “NOW=$(date +’%Y.%m.%d’)” >> $GITHUB_ENV
+      - name: Generate CalVer version
+        id: calver
+        run: |
+          TODAY=$(date "+%Y-%m-%d")
 
+          RELEASE_TAG=$(gh release --repo ${{github.repository}} view --json tagName --jq .tagName)
+          if [ "${RELEASE_TAG}" = "" ]; then
+            RELEASE_TAG="${TODAY}_0"
+            echo "There is no release, use ${RELEASE_TAG}"
+          fi
+
+          TAGS=(${RELEASE_TAG//_/ })
+          MAJOR_VERSION=${TAGS[0]}
+          PATCH_VERSION=${TAGS[1]}
+
+          PREFIX="${VERSION_PREFIX}${TODAY}"
+          if [ "${MAJOR_VERSION}" = "${PREFIX}" ]; then
+            PATCH_VERSION=$(expr ${PATCH_VERSION} + 1)
+            echo "There is already a release for the same date, increment patch_version: ${PATCH_VERSION}"
+          else
+            PATCH_VERSION=1
+          fi
+
+          VERSION="${PREFIX}_${PATCH_VERSION}"
+
+          echo ::set-output name=version::${VERSION}
+          echo "Version set to ${VERSION}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION_PREFIX: "v"
+          TZ: "Asia/Tokyo"
+      - uses: release-drafter/release-drafter@v5
+        with:
+          tag: ${{ steps.calver.outputs.version }}
+          name: ${{ steps.calver.outputs.version }}
+          version: ${{ steps.calver.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Publish release to Github
       uses: marvinpinto/action-automatic-releases@latest
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: Transcript-Latest-${{ env.NOW }}
+        automatic_release_tag: Transcript-Latest ${{ steps.calver.outputs.version }}
         prerelease: false
         title: Transcript_Latest_${{ env.NOW }}
         files: |
           ${{ steps.sign_standard.outputs.signedReleaseFile }}
           ${{ steps.sign_quest.outputs.signedReleaseFile }}
-           env:
-            NOW: ${{ env.NOW }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
