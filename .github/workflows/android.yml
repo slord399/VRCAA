@@ -69,9 +69,9 @@ jobs:
       uses: marvinpinto/action-automatic-releases@latest
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "transcript-latest ${{ env.NOW }}"
+        automatic_release_tag: "transcript-latest"
         prerelease: false
-        title: "${{ env.GITHUB_SHA }}"
+        title: "${{ env.GITHUB_SHA }} ${{ env.NOW }}"
         files: |
           ${{ steps.sign_standard.outputs.signedReleaseFile }}
           ${{ steps.sign_quest.outputs.signedReleaseFile }}
