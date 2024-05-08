@@ -1,71 +1,49 @@
-name: Release Drafter
- 
+name: Create release tag and release note.
+
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
- 
+  push:
+    branches: [ transcript ]
+
 jobs:
-  update_release_draft:
+  create-release-tag:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
- 
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TZ: 'Europe/London'
+
     steps:
-      - name: checkout
-        uses: actions/checkout@v3
-      - name: Get latest release tag
-        id: get_tag
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const repo = context.repo;
-            const { data } = await github.rest.repos.getLatestRelease({
-                owner: repo.owner,
-                repo: repo.repo,
-            });
-            let tag = data.tag_name;
-            console.log(data)
-            const regex = /sprint(\d+)/;
-            const match = tag.match(regex);
-            if (match) {
-              const sprintNumber = parseInt(match[1]);
-              tag = sprintNumber + 1;
-            }
-            return tag;
- 
-      - name: Check release date
-        id: check_date
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const repo = context.repo;
-            const { data } = await github.rest.repos.getLatestRelease({
-              owner: repo.owner,
-              repo: repo.repo,
-            });
-            const releaseDate = new Date(data.published_at);
-            const currentDate = new Date();
-            const diffTime = Math.abs(currentDate - releaseDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return diffDays >= 1;
- 
-      # リリース日から1日以上経過している場合はリリースを作成する
-      - name: create release
-        if: ${{ steps.check_date.outputs.result == 'true' }}
-        uses: release-drafter/release-drafter@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          publish: true
-          name: 'sprint${{ steps.get_tag.outputs.result }}'
-          tag: 'sprint${{ steps.get_tag.outputs.result }}'
- 
-      # リリース日から2週間以上前の場合はリリースを作成しない
-      - name: add label
-        if: ${{ steps.check_date.outputs.result == 'false' }}
-        uses: release-drafter/release-drafter@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          disable-releaser: true
+      - uses: actions/checkout@v2
+
+      # 前回のりリースタグを取得する
+      - name: Get previous tag
+        id: pre_tag
+        run: |
+          echo "::set-output name=pre_tag::$(curl -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)"
+
+      # タグを生成する 「{YYYY.MM.DD}-{当日リリース回数}」
+      - name: Generate release tag
+        id: release_tag
+        run: |
+          today=$(date +'%Y.%m.%d')
+          pre_release_date=$(echo ${{ steps.pre_tag.outputs.pre_tag }} | awk -F'-' '{print $1}')
+          pre_release_count=$(echo ${{ steps.pre_tag.outputs.pre_tag }} | awk -F'-' '{print $2}')
+          if [[ ! $pre_release_date = $today ]]; then
+            echo "init count"
+            pre_release_count=0
+          fi
+          echo "::set-output name=release_tag::$today-$(($pre_release_count + 1))"
+
+      # 前回リリースからの差分をもとに、リリースノートの本文を生成する
+      - name: Generate release note
+        id: release_note
+        run: |
+          echo "::set-output name=release_note::$(curl -X POST -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/${{ github.repository }}/releases/generate-notes -d '{"tag_name":"${{ steps.release_tag.outputs.release_tag }}", "previous_tag_name":"${{ steps.pre_tag.outputs.pre_tag }}"}' | jq .body | sed 's/"//g')"
+
+      # タグを切り、リリースノートを作成する
+      - name: Create Release
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -d "{ \"tag_name\": \"${{ steps.release_tag.outputs.release_tag }}\", \"name\": \"${{ steps.release_tag.outputs.release_tag }}\", \"body\": \"${{ steps.release_note.outputs.release_note }}\"}" \
+            https://api.github.com/repos/${{ github.repository }}/releases
