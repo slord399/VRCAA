@@ -66,7 +66,7 @@ jobs:
       uses: alexvingg/next-release-tag@v1.0.4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        tag_prefix: 'Transcript Latest-'
+        tag_prefix: 'Transcript_Latest-'
 
     - name: Publish release to Github
       uses: marvinpinto/action-automatic-releases@latest
