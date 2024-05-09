@@ -1,0 +1,83 @@
+name: Publish release
+
+on:
+  push:
+    branches: [ "transcript" ]
+  pull_request:
+    branches: [ "transcript" ]
+
+jobs:
+  build:
+    permissions: write-all
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Build Release with Gradle
+      run: ./gradlew assembleRelease
+
+    - name: Rename built apk(s)
+      run: mv app/build/outputs/apk/standard/release/app-standard-release.apk app/build/outputs/apk/standard/release/VRCAA.apk &&
+           mv app/build/outputs/apk/quest/release/app-quest-release.apk app/build/outputs/apk/quest/release/VRCAA-quest.apk
+
+    - name: Setup build tool version variable
+      shell: bash
+      run: |
+        BUILD_TOOL_VERSION=$(ls /usr/local/lib/android/sdk/build-tools/ | tail -n 1)
+        echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
+        echo Last build tool version is: $BUILD_TOOL_VERSION
+
+    - name: Sign app APK (Standard)
+      uses: r0adkll/sign-android-release@v1
+      id: sign_standard
+      with:
+        releaseDirectory: app/build/outputs/apk/standard/release
+        signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+        alias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+      env:
+        BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
+
+    - name: Sign app APK (Quest)
+      uses: r0adkll/sign-android-release@v1
+      id: sign_quest
+      with:
+        releaseDirectory: app/build/outputs/apk/quest/release
+        signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+        alias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+      env:
+        BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
+
+    - name: Generate release tag
+      id: generate_release_tag
+      uses: amitsingh-007/next-release-tag@v5.1.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag_prefix: 'Transcript Latest-'
+          tag_template: 'yyyy.mm.dd.i'
+        
+
+    - name: Publish release to Github
+      uses: marvinpinto/action-automatic-releases@latest
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: ${{ steps.generate_release_tag.outputs.release_tag }}
+        prerelease: false
+        title: ${{ steps.generate_release_tag.outputs.release_tag }}
+        files: |
+          ${{ steps.sign_standard.outputs.signedReleaseFile }}
+          ${{ steps.sign_quest.outputs.signedReleaseFile }}
+
