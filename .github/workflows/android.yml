@@ -72,7 +72,7 @@ jobs:
         tag_prefix: 'Transcript Latest-'
 
     - name: Publish release to Github
-      uses: marvinpinto/action-automatic-releases@latest
+      uses: marvinpinto/action-automatic-releases@1.0.4
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: ${{ steps.generate_release_tag.outputs.release_tag }}
