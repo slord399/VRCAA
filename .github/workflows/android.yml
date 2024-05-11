@@ -69,14 +69,12 @@ jobs:
         tag_prefix: 'Transcript_Latest_'
 
     - name: Publish release to Github
-      if: contains(github.event.head_commit.message, '[Release]')
       uses: marvinpinto/action-automatic-releases@latest
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: ${{ steps.generate_release_tag.outputs.release_tag }}
-        prerelease: false
+        prerelease: true
         title: ${{ steps.generate_release_tag.outputs.release_tag }}
         files: |
           ${{ steps.sign_standard.outputs.signedReleaseFile }}
           ${{ steps.sign_quest.outputs.signedReleaseFile }}
-
