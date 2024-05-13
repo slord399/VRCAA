@@ -4,7 +4,9 @@ import android.app.Application
 import android.content.Intent
 import cc.sovellus.vrcaa.activity.crash.CrashActivity
 import cc.sovellus.vrcaa.activity.crash.GlobalExceptionHandler
+import cc.sovellus.vrcaa.api.vrchat.VRChatApi
 import cc.sovellus.vrcaa.extension.authToken
+import cc.sovellus.vrcaa.manager.ApiManager
 import cc.sovellus.vrcaa.manager.NotificationManager
 import cc.sovellus.vrcaa.service.PipelineService
 
