@@ -1,37 +1,23 @@
 package cc.sovellus.vrcaa.ui.screen.profile
 
 import android.widget.Toast
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.paint
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
@@ -42,16 +28,14 @@ import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.api.vrchat.models.User
 import cc.sovellus.vrcaa.helper.StatusHelper
 import cc.sovellus.vrcaa.helper.TrustHelper
+import cc.sovellus.vrcaa.manager.ApiManager.cache
+import cc.sovellus.vrcaa.ui.components.card.InstanceCardProfile
 import cc.sovellus.vrcaa.ui.components.card.ProfileCard
-import cc.sovellus.vrcaa.ui.components.dialog.ProfileEditDialog
 import cc.sovellus.vrcaa.ui.components.misc.Description
 import cc.sovellus.vrcaa.ui.components.misc.Languages
 import cc.sovellus.vrcaa.ui.components.misc.SubHeader
-import cc.sovellus.vrcaa.ui.models.profile.ProfileModel
-import cc.sovellus.vrcaa.ui.models.profile.ProfileModel.ProfileState
-import cc.sovellus.vrcaa.ui.screen.group.UserGroupsScreen
 import cc.sovellus.vrcaa.ui.screen.misc.LoadingIndicatorScreen
-import kotlinx.coroutines.launch
+import cc.sovellus.vrcaa.ui.screen.world.WorldInfoScreen
 
 class ProfileScreen : Screen {
 
@@ -60,9 +44,7 @@ class ProfileScreen : Screen {
     @Composable
     override fun Content() {
 
-        val context = LocalContext.current
-
-        val model = rememberScreenModel { ProfileModel(context) }
+        val model = rememberScreenModel { ProfileScreenModel() }
 
         val state by model.state.collectAsState()
 
@@ -87,20 +69,21 @@ class ProfileScreen : Screen {
             navigator.pop()
         } else {
 
-            LazyColumn {
+            LazyColumn(modifier = Modifier.padding(16.dp).fillMaxWidth().fillMaxHeight()) {
                 item {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         profile.let {
                             ProfileCard(
                                 thumbnailUrl = it.profilePicOverride.ifEmpty { it.currentAvatarImageUrl },
+                                iconUrl = it.userIcon.ifEmpty { it.currentAvatarImageUrl },
                                 displayName = it.displayName,
-                                statusDescription = it.statusDescription,
+                                statusDescription = it.statusDescription.ifEmpty {  StatusHelper.getStatusFromString(it.status).toString() },
                                 trustRankColor = TrustHelper.getTrustRankFromTags(it.tags).toColor(),
                                 statusColor = StatusHelper.getStatusFromString(it.status).toColor(),
+                                tags = profile.tags
                             )
                         }
                     }
@@ -108,7 +91,6 @@ class ProfileScreen : Screen {
 
                 item {
                     Column(
-                        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp),
                         verticalArrangement = Arrangement.SpaceBetween,
                         horizontalAlignment = Alignment.Start
                     ) {
@@ -116,20 +98,10 @@ class ProfileScreen : Screen {
                             elevation = CardDefaults.cardElevation(
                                 defaultElevation = 6.dp
                             ),
-                            modifier = Modifier.padding(bottom = 16.dp).fillMaxWidth().defaultMinSize(minHeight = 70.dp),
+                            modifier = Modifier.padding(top = 16.dp).defaultMinSize(minHeight = 300.dp),
                         ) {
                             SubHeader(title = stringResource(R.string.profile_label_biography))
                             Description(text = profile.bio)
-                        }
-
-                        ElevatedCard(
-                            elevation = CardDefaults.cardElevation(
-                                defaultElevation = 6.dp
-                            ),
-                            modifier = Modifier.padding(bottom = 16.dp).height(70.dp).fillMaxWidth(),
-                        ) {
-                            SubHeader(title = stringResource(R.string.profile_label_languages))
-                            Languages(languages = profile.tags)
                         }
                     }
                 }

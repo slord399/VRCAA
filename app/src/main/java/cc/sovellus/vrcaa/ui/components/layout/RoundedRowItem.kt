@@ -25,7 +25,7 @@ import com.bumptech.glide.integration.compose.placeholder
 @Composable
 fun RoundedRowItem(
     name: String,
-    url: String,
+    url: Any,
     status: String,
     onClick: () -> Unit
 ) {
@@ -34,7 +34,7 @@ fun RoundedRowItem(
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.clickable(
             onClick = { onClick() }
-        ).size(90.dp)
+        ).size(100.dp)
     ) {
         Badge(
             containerColor = StatusHelper.getStatusFromString(status).toColor(), modifier = Modifier.size(72.dp).align(Alignment.CenterHorizontally)

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -37,7 +38,6 @@ import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.helper.StatusHelper
 import cc.sovellus.vrcaa.api.vrchat.models.LimitedUser
 import cc.sovellus.vrcaa.ui.components.layout.FriendItem
-import cc.sovellus.vrcaa.ui.models.friends.FriendsModel
 import cc.sovellus.vrcaa.ui.screen.profile.UserProfileScreen
 import java.util.UUID
 
@@ -50,7 +50,7 @@ class FriendsScreen : Screen {
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
 
-        val model = navigator.rememberNavigatorScreenModel { FriendsModel() }
+        val model = navigator.rememberNavigatorScreenModel { FriendsScreenModel() }
         val friends = model.friends.collectAsState()
 
         val options = stringArrayResource(R.array.friend_selection_options)
@@ -125,13 +125,8 @@ class FriendsScreen : Screen {
                     .padding(1.dp),
                 state = rememberLazyListState()
             ) {
-                items(
-                    friendsFiltered.count(),
-                    key = { UUID.randomUUID() }
-                ) {
+                items(friendsFiltered, key = { it.id }) { friend ->
                     val navigator = LocalNavigator.currentOrThrow
-                    val friend = friendsFiltered[it]
-
                     FriendItem(
                         friend = friend,
                         callback = { navigator.parent?.parent?.push(UserProfileScreen(friend.id)) }
@@ -164,12 +159,8 @@ class FriendsScreen : Screen {
                     .padding(1.dp),
                 state = rememberLazyListState()
             ) {
-                items(
-                    friendsFiltered.count(),
-                    key = { UUID.randomUUID() }
-                ) {
+                items(friendsFiltered, key = { it.id }) { friend ->
                     val navigator = LocalNavigator.currentOrThrow
-                    val friend = friendsFiltered[it]
 
                     FriendItem(
                         friend = friend,
@@ -204,12 +195,8 @@ class FriendsScreen : Screen {
                     .padding(1.dp),
                 state = rememberLazyListState()
             ) {
-                items(
-                    friendsFiltered.count(),
-                    key = { UUID.randomUUID() }
-                ) {
+                items(friendsFiltered, key = { it.id }) { friend ->
                     val navigator = LocalNavigator.currentOrThrow
-                    val friend = friendsFiltered[it]
 
                     FriendItem(
                         friend = friend,
@@ -243,12 +230,8 @@ class FriendsScreen : Screen {
                     .padding(1.dp),
                 state = rememberLazyListState()
             ) {
-                items(
-                    friendsFiltered.count(),
-                    key = { UUID.randomUUID() }
-                ) {
+                items(friendsFiltered, key = { it.id }) { friend ->
                     val navigator = LocalNavigator.currentOrThrow
-                    val friend = friendsFiltered[it]
 
                     FriendItem(
                         friend = friend,

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -50,10 +51,8 @@ import cc.sovellus.vrcaa.ui.components.card.InstanceCardProfile
 import cc.sovellus.vrcaa.ui.components.misc.SubHeader
 import cc.sovellus.vrcaa.ui.screen.misc.LoadingIndicatorScreen
 import cc.sovellus.vrcaa.ui.screen.notification.NotificationScreen
-import cc.sovellus.vrcaa.ui.models.profile.UserProfileModel.UserProfileState
 import cc.sovellus.vrcaa.ui.components.misc.Languages
 import cc.sovellus.vrcaa.ui.components.card.ProfileCard
-import cc.sovellus.vrcaa.ui.models.profile.UserProfileModel
 import cc.sovellus.vrcaa.ui.screen.avatar.AvatarScreen
 import cc.sovellus.vrcaa.ui.screen.group.UserGroupsScreen
 import cc.sovellus.vrcaa.ui.screen.world.WorldInfoScreen
@@ -67,9 +66,7 @@ class UserProfileScreen(
     @Composable
     override fun Content() {
 
-        val context = LocalContext.current
-
-        val model = rememberScreenModel { UserProfileModel(context, userId) }
+        val model = rememberScreenModel { UserProfileScreenModel(userId) }
 
         val state by model.state.collectAsState()
 
@@ -85,7 +82,7 @@ class UserProfileScreen(
     fun RenderProfile(
         profile: LimitedUser?,
         instance: Instance?,
-        model: UserProfileModel
+        model: UserProfileScreenModel
     ) {
         val navigator = LocalNavigator.currentOrThrow
         val context = LocalContext.current
@@ -182,7 +179,9 @@ class UserProfileScreen(
                 content = { padding ->
                     LazyColumn(
                         modifier = Modifier
+                            .padding(16.dp)
                             .fillMaxWidth()
+                            .fillMaxHeight()
                             .padding(
                                 top = padding.calculateTopPadding(),
                                 bottom = padding.calculateBottomPadding()
@@ -190,31 +189,32 @@ class UserProfileScreen(
                     ) {
                         item {
                             Column(
-                                modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.Center,
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 profile.let {
                                     ProfileCard(
                                         thumbnailUrl = it.profilePicOverride.ifEmpty { it.currentAvatarImageUrl },
+                                        iconUrl = it.userIcon.ifEmpty { it.currentAvatarImageUrl },
                                         displayName = it.displayName,
                                         statusDescription = it.statusDescription.ifEmpty {
                                             StatusHelper.getStatusFromString(it.status).toString()
                                         },
                                         trustRankColor = TrustHelper.getTrustRankFromTags(it.tags).toColor(),
                                         statusColor = StatusHelper.getStatusFromString(it.status).toColor(),
+                                        tags = profile.tags
                                     )
                                 }
                             }
                         }
 
                         item {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.SpaceBetween,
-                                horizontalAlignment = Alignment.Start
-                            ) {
-                                if (instance != null) {
+                            if (instance != null) {
+                                Column(
+                                    verticalArrangement = Arrangement.SpaceBetween,
+                                    horizontalAlignment = Alignment.Start,
+                                    modifier = Modifier.padding(top = 16.dp)
+                                ) {
                                     InstanceCardProfile(profile = profile, instance = instance) {
                                         navigator.push(WorldInfoScreen(instance.worldId))
                                     }
@@ -224,7 +224,6 @@ class UserProfileScreen(
 
                         item {
                             Column(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp),
                                 verticalArrangement = Arrangement.SpaceBetween,
                                 horizontalAlignment = Alignment.Start
                             ) {
@@ -232,20 +231,10 @@ class UserProfileScreen(
                                     elevation = CardDefaults.cardElevation(
                                         defaultElevation = 6.dp
                                     ),
-                                    modifier = Modifier.padding(bottom = 16.dp).fillMaxWidth().defaultMinSize(minHeight = 80.dp),
+                                    modifier = Modifier.padding(top = 16.dp).defaultMinSize(minHeight = 300.dp),
                                 ) {
                                     SubHeader(title = stringResource(R.string.profile_label_biography))
                                     Description(text = profile.bio)
-                                }
-
-                                ElevatedCard(
-                                    elevation = CardDefaults.cardElevation(
-                                        defaultElevation = 6.dp
-                                    ),
-                                    modifier = Modifier.padding(bottom = 16.dp).height(70.dp).fillMaxWidth(),
-                                ) {
-                                    SubHeader(title = stringResource(R.string.profile_label_languages))
-                                    Languages(languages = profile.tags)
                                 }
                             }
                         }

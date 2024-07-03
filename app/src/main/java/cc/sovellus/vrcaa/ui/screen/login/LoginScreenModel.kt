@@ -1,4 +1,4 @@
-package cc.sovellus.vrcaa.ui.models.login
+package cc.sovellus.vrcaa.ui.screen.login
 
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
@@ -12,13 +12,13 @@ import cafe.adriel.voyager.navigator.Navigator
 import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.activity.MainActivity
 import cc.sovellus.vrcaa.api.vrchat.VRChatApi
+import cc.sovellus.vrcaa.extension.authToken
 import cc.sovellus.vrcaa.extension.twoFactorToken
 import cc.sovellus.vrcaa.extension.userCredentials
 import cc.sovellus.vrcaa.manager.ApiManager.api
-import cc.sovellus.vrcaa.ui.screen.login.MfaScreen
 import kotlinx.coroutines.launch
 
-class LoginModel(
+class LoginScreenModel(
     private val context: Context,
     private val navigator: Navigator
 ) : ScreenModel {
@@ -40,8 +40,8 @@ class LoginModel(
                 } else {
                     if (result.mfaType == VRChatApi.MfaType.NONE)
                     {
+                        preferences.authToken = result.token
                         val intent = Intent(context, MainActivity::class.java)
-                        intent.extras?.putString("cookie", result.token)
                         context.startActivity(intent)
                     } else {
                         preferences.userCredentials = Pair(username.value, password.value)

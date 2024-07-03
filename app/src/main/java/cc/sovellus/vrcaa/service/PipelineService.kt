@@ -90,7 +90,7 @@ class PipelineService : Service(), CoroutineScope {
                     FeedManager.addFeed(FeedManager.Feed(FeedManager.FeedType.FRIEND_FEED_ONLINE).apply {
                         friendId = update.userId
                         friendName = update.user.displayName
-                        friendPictureUrl = update.user.userIcon.ifEmpty { update.user.currentAvatarThumbnailImageUrl }
+                        friendPictureUrl = update.user.userIcon.ifEmpty { update.user.currentAvatarImageUrl }
                     })
 
                     FriendManager.updateLocation(update.userId, "private")
@@ -161,6 +161,8 @@ class PipelineService : Service(), CoroutineScope {
                                     }
                             )
                         }
+
+                        cache.addWorld(update.worldId, update.world.name)
                         FriendManager.updateLocation(update.userId, update.location)
                     }
 
@@ -223,7 +225,7 @@ class PipelineService : Service(), CoroutineScope {
                         launch {
                             val instance = api.getInstance(user.location)
                             if (status == StatusHelper.Status.Active || status == StatusHelper.Status.JoinMe) {
-                                instance?.world?.name?.let { gateway?.sendPresence(it, "${location.instanceType} #${instance.name} ${if (BuildConfig.FLAVOR == "quest") { "(VR)" } else { "(Mobile)" }} (${instance.nUsers} of ${instance.capacity})", instance.world.imageUrl, status) }
+                                instance.world.name.let { gateway?.sendPresence(it, "${location.instanceType} #${instance.name} ${if (BuildConfig.FLAVOR == "quest") { "(VR)" } else { "(Mobile)" }} (${instance.nUsers} of ${instance.capacity})", instance.world.imageUrl, status) }
                             } else {
                                 gateway?.sendPresence(status.toString(), "User location is hidden.", null, status)
                             }
