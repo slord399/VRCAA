@@ -73,7 +73,7 @@ jobs:
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: ${{ steps.generate_release_tag.outputs.release_tag }}
-        prerelease: true
+        prerelease: false
         title: ${{ steps.generate_release_tag.outputs.release_tag }}
         files: |
           ${{ steps.sign_standard.outputs.signedReleaseFile }}
