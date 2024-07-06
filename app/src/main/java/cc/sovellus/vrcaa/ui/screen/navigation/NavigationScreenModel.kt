@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.os.bundleOf
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import cc.sovellus.vrcaa.BuildConfig
@@ -43,15 +44,23 @@ class NavigationScreenModel(
     val updater = AutoUpdater(context)
 
     var hasUpdate = mutableStateOf(false)
+    var hasNoInternet = mutableStateOf(false)
 
     private val listener = object : VRChatApi.SessionListener {
         override fun onSessionInvalidate() {
             val serviceIntent = Intent(context, PipelineService::class.java)
             context.stopService(serviceIntent)
 
+            val bundle = bundleOf()
+            bundle.putBoolean("INVALID_SESSION", true)
+
             val intent = Intent(context, LoginActivity::class.java)
-            intent.setFlags(FLAG_ACTIVITY_NEW_TASK)
+            intent.putExtras(bundle)
             context.startActivity(intent)
+        }
+
+        override fun noInternet() {
+            hasNoInternet.value = true
         }
     }
 
