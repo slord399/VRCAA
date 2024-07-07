@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
@@ -17,6 +18,8 @@ import cafe.adriel.voyager.core.screen.uniqueScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cc.sovellus.vrcaa.R
+import cc.sovellus.vrcaa.helper.StatusHelper
+import cc.sovellus.vrcaa.manager.ApiManager.cache
 import cc.sovellus.vrcaa.ui.components.layout.HorizontalRow
 import cc.sovellus.vrcaa.ui.components.layout.RoundedRowItem
 import cc.sovellus.vrcaa.ui.components.layout.WorldRow
@@ -31,13 +34,13 @@ class HomeScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val model = navigator.rememberNavigatorScreenModel { HomeScreenModel() }
+        val context = LocalContext.current
+        val model = navigator.rememberNavigatorScreenModel { HomeScreenModel(context) }
 
         val friends = model.friendsList.collectAsState().value
         val recent = model.recentlyVisited.collectAsState().value
-        val featured = model.featuredWorlds.collectAsState().value
 
-        if (friends.isEmpty() || recent.isEmpty() || featured.isEmpty()) {
+        if (friends.isEmpty() || recent.isEmpty()) {
             LoadingIndicatorScreen().Content()
         } else {
             LazyColumn(
@@ -51,7 +54,7 @@ class HomeScreen : Screen {
                         title = stringResource(R.string.home_active_friends)
                     ) {
                         val filteredFriends = friends.filter { it.location != "offline" }
-                        items(filteredFriends, key = { it.id }) { friend ->
+                        items(filteredFriends.sortedBy { StatusHelper.getStatusFromString(it.status) }, key = { it.id }) { friend ->
                             RoundedRowItem(
                                 name = friend.displayName,
                                 url = friend.userIcon.ifEmpty { friend.currentAvatarImageUrl },
@@ -70,7 +73,7 @@ class HomeScreen : Screen {
                             WorldRow(
                                 name = world.name,
                                 url = world.imageUrl,
-                                count = null,
+                                count = world.occupants,
                                 onClick = { navigator.parent?.parent?.push(WorldInfoScreen(world.id)) }
                             )
                         }
@@ -95,15 +98,19 @@ class HomeScreen : Screen {
                     Spacer(modifier = Modifier.padding(4.dp))
 
                     HorizontalRow(
-                        title = stringResource(R.string.home_featured_worlds)
+                        title = stringResource(R.string.home_friend_locations)
                     ) {
-                        items(featured, key = { it.id }) { world ->
-                            WorldRow(
-                                name = world.name,
-                                url = world.imageUrl,
-                                count = world.occupants,
-                                onClick = { navigator.parent?.parent?.push(WorldInfoScreen(world.id)) }
-                            )
+                        val friendLocations = friends.filter { it.location.contains("wrld_") }
+                        items(friendLocations, key = { it.id }) { friend ->
+                            val world = cache.getWorldObject(friend.location.split(':')[0])
+                            if (world != null) {
+                                WorldRow(
+                                    name = world.name,
+                                    url = world.thumbnailImageUrl,
+                                    count = world.occupants,
+                                    onClick = { navigator.parent?.parent?.push(WorldInfoScreen(world.id)) }
+                                )
+                            }
                         }
                     }
                 }

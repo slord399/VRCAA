@@ -1,5 +1,6 @@
 package cc.sovellus.vrcaa.ui.screen.navigation
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
@@ -10,12 +11,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.os.bundleOf
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import cc.sovellus.vrcaa.BuildConfig
-import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.activity.LoginActivity
-import cc.sovellus.vrcaa.AutoUpdater
 import cc.sovellus.vrcaa.api.vrchat.VRChatApi
-import cc.sovellus.vrcaa.extension.updatesEnabled
 import cc.sovellus.vrcaa.extension.groupsAmount
 import cc.sovellus.vrcaa.extension.searchFeaturedWorlds
 import cc.sovellus.vrcaa.extension.sortWorlds
@@ -24,6 +21,7 @@ import cc.sovellus.vrcaa.extension.worldsAmount
 import cc.sovellus.vrcaa.manager.ApiManager.api
 import cc.sovellus.vrcaa.service.PipelineService
 import kotlinx.coroutines.launch
+
 
 class NavigationScreenModel(
     private val context: Context
@@ -34,6 +32,8 @@ class NavigationScreenModel(
     var searchModeActivated = mutableStateOf(false)
     var searchText = mutableStateOf("")
     var searchHistory = mutableListOf<String>()
+    var hasNoInternet = mutableStateOf(false)
+    var invalidSession = mutableStateOf(false)
 
     var featuredWorlds = mutableStateOf(preferences.searchFeaturedWorlds)
     var sortWorlds = mutableStateOf(preferences.sortWorlds)
@@ -41,22 +41,26 @@ class NavigationScreenModel(
     var usersAmount = mutableIntStateOf(preferences.usersAmount)
     var groupsAmount = mutableIntStateOf(preferences.groupsAmount)
 
-    val updater = AutoUpdater(context)
-
-    var hasUpdate = mutableStateOf(false)
-    var hasNoInternet = mutableStateOf(false)
-
     private val listener = object : VRChatApi.SessionListener {
         override fun onSessionInvalidate() {
-            val serviceIntent = Intent(context, PipelineService::class.java)
-            context.stopService(serviceIntent)
+            if (!invalidSession.value) {
+                invalidSession.value = true
 
-            val bundle = bundleOf()
-            bundle.putBoolean("INVALID_SESSION", true)
+                val serviceIntent = Intent(context, PipelineService::class.java)
+                context.stopService(serviceIntent)
 
-            val intent = Intent(context, LoginActivity::class.java)
-            intent.putExtras(bundle)
-            context.startActivity(intent)
+                val bundle = bundleOf()
+                bundle.putBoolean("INVALID_SESSION", true)
+
+                val intent = Intent(context, LoginActivity::class.java)
+                intent.putExtras(bundle)
+                intent.addFlags(FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+
+                if (context is Activity) {
+                    context.finish()
+                }
+            }
         }
 
         override fun noInternet() {
@@ -66,12 +70,6 @@ class NavigationScreenModel(
 
     init {
         api.setSessionListener(listener)
-
-        screenModelScope.launch {
-            if (preferences.updatesEnabled && !BuildConfig.DEBUG) {
-                hasUpdate.value = updater.checkForUpdates()
-            }
-        }
     }
 
     fun enterSearchMode() {
@@ -90,18 +88,6 @@ class NavigationScreenModel(
 
     fun clearSearchText() {
         searchText.value = ""
-    }
-
-    fun update(context: Context) {
-        screenModelScope.launch {
-            if (!updater.downloadUpdate()) {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.update_toast_failed_update),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
     }
 
     fun resetSettings() {

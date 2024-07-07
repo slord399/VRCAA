@@ -34,11 +34,13 @@ import cc.sovellus.vrcaa.manager.ApiManager.cache
 import cc.sovellus.vrcaa.manager.FeedManager
 import cc.sovellus.vrcaa.manager.FriendManager
 import cc.sovellus.vrcaa.manager.NotificationManager
+import cc.sovellus.vrcaa.widgets.FriendWidgetReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
 
 class PipelineService : Service(), CoroutineScope {
 
@@ -164,10 +166,13 @@ class PipelineService : Service(), CoroutineScope {
                     }
 
                     if (update.world != null)
-                        cache.addWorld(update.worldId, update.world.name)
+                        cache.addWorld(update.world)
 
                     if (update.location != null)
                         FriendManager.updateLocation(update.userId, update.location)
+
+                    val intent = Intent(baseContext, FriendWidgetReceiver::class.java).apply { action = "FRIEND_LOCATION_UPDATE" }
+                    sendBroadcast(intent)
                 }
 
                 is FriendUpdate -> {
@@ -202,8 +207,9 @@ class PipelineService : Service(), CoroutineScope {
                             FeedManager.addFeed(
                                 FeedManager.Feed(FeedManager.FeedType.FRIEND_FEED_STATUS).apply {
                                     friendId = update.userId
-                                    friendName = update.user.displayName
+                                    friendName = update.user.displayName.toString()
                                     friendPictureUrl = update.user.userIcon.ifEmpty { update.user.currentAvatarImageUrl }
+                                        .toString()
                                     friendStatus = StatusHelper.getStatusFromString(update.user.status)
                                 }
                             )
@@ -295,8 +301,7 @@ class PipelineService : Service(), CoroutineScope {
                                                 friendId = notification.senderUserId
                                                 friendName = notification.senderUsername
                                                 friendPictureUrl =
-                                                    sender?.let { it.profilePicOverride.ifEmpty { it.currentAvatarImageUrl } }
-                                                        .toString()
+                                                    sender?.let { it.profilePicOverride.ifEmpty { it.currentAvatarImageUrl } }.toString()
                                             }
                                     )
                                 }
