@@ -2,9 +2,9 @@ name: Publish nightly
 
 on:
   push:
-    branches: [ "transcript" ]
+    branches: [ "internal-testing" ]
   pull_request:
-    branches: [ "transcript" ]
+    branches: [ "internal-testing" ]
 
 jobs:
   build:
@@ -13,9 +13,9 @@ jobs:
     if: contains(github.event.head_commit.message, '[Skip-CI]') == false
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -39,7 +39,7 @@ jobs:
         echo Last build tool version is: $BUILD_TOOL_VERSION
 
     - name: Sign app APK (Standard)
-      uses: r0adkll/sign-android-release@v1
+      uses: noriban/sign-android-release@v5.1
       id: sign_standard
       with:
         releaseDirectory: app/build/outputs/apk/standard/release
@@ -51,7 +51,7 @@ jobs:
         BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
 
     - name: Sign app APK (Quest)
-      uses: r0adkll/sign-android-release@v1
+      uses: noriban/sign-android-release@v5.1
       id: sign_quest
       with:
         releaseDirectory: app/build/outputs/apk/quest/release
@@ -65,13 +65,14 @@ jobs:
 
     - name: Generate Release Tag
       id: generate_release_tag
-      uses: alexvingg/next-release-tag@v1.0.4
+      uses: slord399/next-release-tag@v1.0.0
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         tag_prefix: 'Transcript_Latest_'
 
+
     - name: Publish release to Github
-      uses: marvinpinto/action-automatic-releases@latest
+      uses: slord399/action-automatic-releases@v1.0.1
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: ${{ steps.generate_release_tag.outputs.release_tag }}
