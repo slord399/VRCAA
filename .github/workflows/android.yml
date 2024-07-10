@@ -2,9 +2,9 @@ name: Publish nightly
 
 on:
   push:
-    branches: [ "internal-testing" ]
+    branches: [ "transcript" ]
   pull_request:
-    branches: [ "internal-testing" ]
+    branches: [ "transcript" ]
 
 jobs:
   build:
