@@ -1,5 +1,6 @@
 package cc.sovellus.vrcaa.helper
 
+import android.util.Log
 import cc.sovellus.vrcaa.manager.ApiManager.api
 import cc.sovellus.vrcaa.manager.ApiManager.cache
 import extensions.wu.seal.PropertySuffixSupport.append
@@ -21,17 +22,21 @@ object LocationHelper {
     )
 
     // Reference from https://github.com/vrcx-team/VRCX/blob/master/html/src/app.js#L699-L804
-    fun parseLocationInfo(intent: String, isInstance: Boolean = false): LocationInfo {
-
+    fun parseLocationInfo(intent: String): LocationInfo {
         val result = LocationInfo()
 
         val intents = intent.split('~')
-
-        if (!isInstance) {
-            result.worldId = intents[0].split(':')[0]
-            result.instanceId = intents[0].split(':')[1]
-        } else {
-            result.instanceId = intents[0]
+        val info = intents[0].split(':')
+        if (info.size == 1) {
+            if (info[0].contains("wrld_")) {
+                result.worldId = info[0]
+            } else {
+                result.instanceId = info[0]
+            }
+        }
+        else {
+            result.worldId = info[0]
+            result.instanceId = info[1]
         }
 
         for (i in intents) {
