@@ -3,8 +3,6 @@ name: Publish Transcript
 on:
   push:
     branches: [ "transcript" ]
-  pull_request:
-    branches: [ "transcript" ]
 
 jobs:
   build:
