@@ -3,7 +3,6 @@ package cc.sovellus.vrcaa.ui.screen.navigation
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.compose.runtime.mutableIntStateOf
@@ -11,7 +10,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.os.bundleOf
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import cc.sovellus.vrcaa.activity.LoginActivity
+import cafe.adriel.voyager.navigator.tab.Tab
+import cc.sovellus.vrcaa.activity.MainActivity
 import cc.sovellus.vrcaa.api.vrchat.VRChatApi
 import cc.sovellus.vrcaa.extension.groupsAmount
 import cc.sovellus.vrcaa.extension.searchFeaturedWorlds
@@ -41,6 +41,8 @@ class NavigationScreenModel(
     var usersAmount = mutableIntStateOf(preferences.usersAmount)
     var groupsAmount = mutableIntStateOf(preferences.groupsAmount)
 
+    val tabHistory = mutableListOf<Tab>()
+
     private val listener = object : VRChatApi.SessionListener {
         override fun onSessionInvalidate() {
             if (!invalidSession.value) {
@@ -52,9 +54,8 @@ class NavigationScreenModel(
                 val bundle = bundleOf()
                 bundle.putBoolean("INVALID_SESSION", true)
 
-                val intent = Intent(context, LoginActivity::class.java)
+                val intent = Intent(context, MainActivity::class.java)
                 intent.putExtras(bundle)
-                intent.addFlags(FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
 
                 if (context is Activity) {

@@ -1,5 +1,7 @@
 package cc.sovellus.vrcaa.ui.screen.friends
 
+import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -24,6 +26,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringArrayResource
@@ -56,6 +62,15 @@ class FriendsScreen : Screen {
         val options = stringArrayResource(R.array.friend_selection_options)
         val icons = listOf(Icons.Filled.Star, Icons.Filled.Person, Icons.Filled.Web, Icons.Filled.PersonOff)
 
+        BackHandler(
+            enabled = model.navigationStack.isNotEmpty(),
+            onBack = {
+                val index = model.navigationStack.last()
+                model.currentIndex.intValue = index
+                model.navigationStack.removeLast()
+            }
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize(),
@@ -83,6 +98,7 @@ class FriendsScreen : Screen {
                             }
                         },
                         onCheckedChange = {
+                            model.navigationStack.add(model.currentIndex.intValue)
                             model.currentIndex.intValue = index
                         },
                         checked = index == model.currentIndex.intValue
@@ -105,7 +121,8 @@ class FriendsScreen : Screen {
     fun ShowFriendsFavorite(
         friends: State<List<Friend>>
     ) {
-        if (friends.value.isEmpty()) {
+        val filteredFriends = friends.value.filter { it.isFavorite }
+        if (filteredFriends.isEmpty()) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
@@ -122,13 +139,11 @@ class FriendsScreen : Screen {
                     .padding(1.dp),
                 state = rememberLazyListState()
             ) {
-                items(friends.value.sortedBy { StatusHelper.getStatusFromString(it.status) }, key = { UUID.randomUUID() }) { friend ->
-                    if (friend.isFavorite && friend.location != "offline") {
-                        FriendItem(
-                            friend = friend,
-                            callback = { navigator.parent?.parent?.push(UserProfileScreen(friend.id)) }
-                        )
-                    }
+                items(filteredFriends.sortedBy { StatusHelper.getStatusFromString(it.status) }, key = { UUID.randomUUID() }) { friend ->
+                    FriendItem(
+                        friend = friend,
+                        callback = { navigator.parent?.parent?.push(UserProfileScreen(friend.id)) }
+                    )
                 }
             }
         }
@@ -138,7 +153,8 @@ class FriendsScreen : Screen {
     fun ShowFriendsOnWebsite(
         friends: State<List<Friend>>
     ) {
-        if (friends.value.isEmpty()) {
+        val filteredFriends = friends.value.sortedBy { StatusHelper.getStatusFromString(it.status) }
+        if (filteredFriends.isEmpty()) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
@@ -155,7 +171,7 @@ class FriendsScreen : Screen {
                     .padding(1.dp),
                 state = rememberLazyListState()
             ) {
-                items(friends.value.sortedBy { StatusHelper.getStatusFromString(it.status) }, key = { UUID.randomUUID() }) { friend ->
+                items(filteredFriends, key = { UUID.randomUUID() }) { friend ->
                     if (friend.location == "offline" && StatusHelper.getStatusFromString(friend.status) != StatusHelper.Status.Offline) {
                         FriendItem(
                             friend = friend,
@@ -171,7 +187,8 @@ class FriendsScreen : Screen {
     fun ShowFriends(
         friends: State<List<Friend>>
     ) {
-        if (friends.value.isEmpty()) {
+        val filteredFriends = friends.value.filter { !it.isFavorite && it.location != "offline" && StatusHelper.getStatusFromString(it.status) != StatusHelper.Status.Offline }
+        if (filteredFriends.isEmpty()) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
@@ -188,13 +205,11 @@ class FriendsScreen : Screen {
                     .padding(1.dp),
                 state = rememberLazyListState()
             ) {
-                items(friends.value.sortedBy { StatusHelper.getStatusFromString(it.status) }, key = { UUID.randomUUID() }) { friend ->
-                    if (!friend.isFavorite && friend.location != "offline" && StatusHelper.getStatusFromString(friend.status) != StatusHelper.Status.Offline) {
-                        FriendItem(
-                            friend = friend,
-                            callback = { navigator.parent?.parent?.push(UserProfileScreen(friend.id)) }
-                        )
-                    }
+                items(filteredFriends.sortedBy { StatusHelper.getStatusFromString(it.status)  }, key = { UUID.randomUUID() }) { friend ->
+                    FriendItem(
+                        friend = friend,
+                        callback = { navigator.parent?.parent?.push(UserProfileScreen(friend.id)) }
+                    )
                 }
             }
         }
@@ -204,7 +219,8 @@ class FriendsScreen : Screen {
     fun ShowFriendsOffline(
         friends: State<List<Friend>>
     ) {
-        if (friends.value.isEmpty()) {
+        val filteredFriends = friends.value.filter { it.location == "offline" && StatusHelper.getStatusFromString(it.status) == StatusHelper.Status.Offline }
+        if (filteredFriends.isEmpty()) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
@@ -221,13 +237,11 @@ class FriendsScreen : Screen {
                     .padding(1.dp),
                 state = rememberLazyListState()
             ) {
-                items(friends.value.sortedBy { StatusHelper.getStatusFromString(it.status) }, key = { UUID.randomUUID() }) { friend ->
-                    if (friend.location == "offline" && StatusHelper.getStatusFromString(friend.status) == StatusHelper.Status.Offline) {
-                        FriendItem(
-                            friend = friend,
-                            callback = { navigator.parent?.parent?.push(UserProfileScreen(friend.id)) }
-                        )
-                    }
+                items(filteredFriends.sortedBy { StatusHelper.getStatusFromString(it.status) }, key = { UUID.randomUUID() }) { friend ->
+                    FriendItem(
+                        friend = friend,
+                        callback = { navigator.parent?.parent?.push(UserProfileScreen(friend.id)) }
+                    )
                 }
             }
         }

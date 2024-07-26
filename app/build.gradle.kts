@@ -11,9 +11,9 @@ android {
     defaultConfig {
         applicationId = "cc.sovellus.vrcaa"
         minSdk = 27
-        targetSdk = 34
-        versionCode = 100100
-        versionName = "1.1.0"
+        targetSdk = 35
+        versionCode = 100200
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -124,7 +124,6 @@ dependencies {
     implementation("cafe.adriel.voyager:voyager-bottom-sheet-navigator:1.1.0-beta02")
     implementation("cafe.adriel.voyager:voyager-tab-navigator:1.1.0-beta02")
     implementation("cafe.adriel.voyager:voyager-transitions:1.1.0-beta02")
-    implementation("cafe.adriel.voyager:voyager-livedata:1.1.0-alpha02")
     implementation("androidx.activity:activity-ktx:1.9.0")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.33.2-alpha")
     implementation("androidx.compose.material:material:1.6.8")

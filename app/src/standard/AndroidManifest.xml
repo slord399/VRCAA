@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 
     <application
@@ -24,19 +24,7 @@
         >
 
         <activity
-            android:name=".activity.LoginActivity"
-            android:exported="true"
-            android:theme="@style/Theme.VRCAA"
-            android:fitsSystemWindows="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <activity
             android:name=".activity.CrashActivity"
-            android:exported="true"
             android:theme="@style/Theme.VRCAA"
             android:fitsSystemWindows="true">
         </activity>
@@ -46,20 +34,25 @@
             android:exported="true"
             android:theme="@style/Theme.VRCAA"
             android:fitsSystemWindows="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
         <service
             android:name=".service.PipelineService"
-            android:foregroundServiceType="dataSync"/>
+            android:foregroundServiceType="specialUse"/>
 
         <receiver android:name=".widgets.FriendWidgetReceiver"
-            android:exported="true">
+            android:exported="true"
+        >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/friend_widget" />
+                android:resource="@xml/friend_widget"/>
         </receiver>
     </application>
 </manifest>

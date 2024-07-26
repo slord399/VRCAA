@@ -1,13 +1,14 @@
 package cc.sovellus.vrcaa.ui.screen.navigation
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -44,6 +45,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -57,7 +59,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat.finishAffinity
 import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.uniqueScreenKey
@@ -65,24 +66,20 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.CurrentTab
-import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabDisposable
 import cafe.adriel.voyager.navigator.tab.TabNavigator
-import cc.sovellus.vrcaa.BuildConfig
 import cc.sovellus.vrcaa.R
-import cc.sovellus.vrcaa.activity.LoginActivity
+import cc.sovellus.vrcaa.activity.MainActivity
 import cc.sovellus.vrcaa.manager.ApiManager.cache
 import cc.sovellus.vrcaa.ui.components.dialog.ProfileEditDialog
 import cc.sovellus.vrcaa.ui.components.dialog.SingleButtonDialog
-import cc.sovellus.vrcaa.ui.components.dialog.UpdatedDialog
 import cc.sovellus.vrcaa.ui.components.input.ComboInput
 import cc.sovellus.vrcaa.ui.screen.group.UserGroupsScreen
 import cc.sovellus.vrcaa.ui.screen.search.SearchResultScreen
 import cc.sovellus.vrcaa.ui.tabs.FeedTab
 import cc.sovellus.vrcaa.ui.tabs.FriendsTab
 import cc.sovellus.vrcaa.ui.tabs.HomeTab
-import cc.sovellus.vrcaa.ui.tabs.PicturesTab
 import cc.sovellus.vrcaa.ui.tabs.ProfileTab
 import cc.sovellus.vrcaa.ui.tabs.SettingsTab
 import kotlinx.coroutines.launch
@@ -103,8 +100,7 @@ class NavigationScreen : Screen {
         if (model.hasNoInternet.value) {
             SingleButtonDialog(
                 onClick = {
-                    val intent = Intent(context, LoginActivity::class.java)
-                    intent.setFlags(FLAG_ACTIVITY_NEW_TASK)
+                    val intent = Intent(context, MainActivity::class.java)
                     context.startActivity(intent)
                 },
                 title = stringResource(R.string.misc_no_internet_title),
@@ -113,25 +109,61 @@ class NavigationScreen : Screen {
             )
         }
 
+        val tabs = listOf(HomeTab, FriendsTab, FeedTab, ProfileTab, SettingsTab)
+
         TabNavigator(
             HomeTab,
             tabDisposable = {
                 TabDisposable(
                     navigator = it,
-                    tabs = listOf(HomeTab, FriendsTab, FeedTab, ProfileTab)
+                    tabs = tabs
                 )
             }
-        ) {
+        ) { tabNavigator ->
             val sheetState = rememberModalBottomSheetState()
+
             var showBottomSheet by remember { mutableStateOf(false) }
             var isMenuExpanded by remember { mutableStateOf(false) }
             var isEditingProfile by remember { mutableStateOf(false) }
 
             val scope = rememberCoroutineScope()
 
+            var pressBackCounter by remember { mutableIntStateOf(0) }
+
+            BackHandler(
+                enabled = true,
+                onBack = {
+                    pressBackCounter++
+                    if (model.tabHistory.isNotEmpty())
+                    {
+                        val tab = model.tabHistory.last()
+                        tabNavigator.current = tab
+                        model.tabHistory.removeLast()
+                        pressBackCounter = 0
+                    }
+                    else
+                    {
+                        if (pressBackCounter == 2)
+                        {
+                            if (context is Activity)
+                                context.finish()
+                            pressBackCounter = 0
+                        }
+                        else
+                        {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.misc_exit_toast_label),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            )
+
             Scaffold(
                 topBar = {
-                    if (it.current.options.index.toInt() == 0) {
+                    if (tabNavigator.current.options.index.toInt() == 0) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.Center,
@@ -218,7 +250,7 @@ class NavigationScreen : Screen {
                             }
                         }
                     }
-                    else if (it.current.options.index.toInt() == 1) {
+                    else if (tabNavigator.current.options.index.toInt() == 1) {
                         TopAppBar(
                             title = { Text(
                                 text = stringResource(id = R.string.tabs_label_friends),
@@ -227,7 +259,7 @@ class NavigationScreen : Screen {
                             ) }
                         )
                     }
-                    else if (it.current.options.index.toInt() == 2) {
+                    else if (tabNavigator.current.options.index.toInt() == 2) {
                         TopAppBar(
                             actions = {
                                 IconButton(onClick = { isMenuExpanded = true }) {
@@ -272,7 +304,7 @@ class NavigationScreen : Screen {
                             ) }
                         )
                     }
-                    else if (it.current.options.index.toInt() == 3) {
+                    else if (tabNavigator.current.options.index.toInt() == 3) {
                         TopAppBar(
                             title = { Text(
                                 text = stringResource(id = R.string.tabs_label_feed),
@@ -281,7 +313,7 @@ class NavigationScreen : Screen {
                             ) }
                         )
                     }
-                    else if (it.current.options.index.toInt() == 4) {
+                    else if (tabNavigator.current.options.index.toInt() == 4) {
                         TopAppBar(
                             title = { Text(
                                 text = stringResource(id = R.string.tabs_label_pictures),
@@ -290,7 +322,7 @@ class NavigationScreen : Screen {
                             ) }
                         )
                     }
-                    else if (it.current.options.index.toInt() == 5) {
+                    else if (tabNavigator.current.options.index.toInt() == 5) {
                         TopAppBar(
                             title = { Text(
                                 text = stringResource(id = R.string.tabs_label_settings),
@@ -474,27 +506,20 @@ class NavigationScreen : Screen {
                 },
                 bottomBar = {
                     NavigationBar {
-                        NavigationBarItem(HomeTab)
-                        NavigationBarItem(FriendsTab)
-                        NavigationBarItem(FeedTab)
-                        if (BuildConfig.FLAVOR == "quest") { NavigationBarItem(PicturesTab) }
-                        NavigationBarItem(ProfileTab)
-                        NavigationBarItem(SettingsTab)
+                        tabs.forEach { tab ->
+                            NavigationBarItem(
+                                selected = tabNavigator.current.key == tab.key,
+                                onClick = {
+                                    model.tabHistory.add(tabNavigator.current)
+                                    tabNavigator.current = tab
+                                },
+                                icon = { Icon(painter = tab.options.icon!!, contentDescription = tab.options.title) },
+                                label = { Text(text = tab.options.title) }
+                            )
+                        }
                     }
                 }
             )
         }
-    }
-
-    @Composable
-    private fun RowScope.NavigationBarItem(tab: Tab) {
-        val tabNavigator = LocalTabNavigator.current
-
-        NavigationBarItem(
-            selected = tabNavigator.current.key == tab.key,
-            onClick = { tabNavigator.current = tab },
-            icon = { Icon(painter = tab.options.icon!!, contentDescription = tab.options.title) },
-            label = { Text(text = tab.options.title) }
-        )
     }
 }

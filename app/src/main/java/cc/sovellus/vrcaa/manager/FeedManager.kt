@@ -1,9 +1,12 @@
 package cc.sovellus.vrcaa.manager
 
+import android.util.Log
+import cc.sovellus.vrcaa.extension.milliseconds
 import cc.sovellus.vrcaa.helper.StatusHelper
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.UUID
+import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -37,19 +40,19 @@ object FeedManager {
         fun onReceiveUpdate(list: MutableList<Feed>)
     }
 
-    fun addFeed(feed: Feed) {
-        val previousFeed = feedList.find { it.type == feed.type && it.friendId == feed.friendId }
-        if (previousFeed != null) {
-            val prev: Long = previousFeed.feedTimestamp.toEpochSecond(ZoneOffset.UTC).milliseconds.inWholeMilliseconds
-            val next: Long = feed.feedTimestamp.toEpochSecond(ZoneOffset.UTC).milliseconds.inWholeMilliseconds
-            if (prev < (next + 1000)) {
-                feedList.add(feed)
-                feedListener?.onReceiveUpdate(feedList)
-            }
-        } else {
-            feedList.add(feed)
-            feedListener?.onReceiveUpdate(feedList)
+    fun isDuplicate(feed: Feed): Boolean {
+        val lastFeed = feedList.findLast { it.type == feed.type && it.friendId == feed.friendId }
+        if (lastFeed != null) {
+            val last: Long = lastFeed.feedTimestamp.milliseconds
+            val incoming: Long = feed.feedTimestamp.milliseconds
+            return abs(last - incoming) >= 1500
         }
+        return false
+    }
+
+    fun addFeed(feed: Feed) {
+        feedList.add(feed)
+        feedListener?.onReceiveUpdate(feedList)
     }
 
     fun getFeed(): MutableList<Feed> {
