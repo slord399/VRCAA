@@ -23,7 +23,7 @@
     <string name="home_toast_updated_info">Amis et mondes actualisés.</string>
     <!-- Login -->
     <string name="login_text">Se connecter à VRC Android Assistant</string>
-    <string name="login_label_username">Nom d\'utilisateur ou adresse email</string>
+    <string name="login_label_username">Nom d\'utilisateur ou adresse e-mail</string>
     <string name="login_label_password">Mot de passe</string>
     <string name="login_button_text">Se connecter</string>
     <string name="login_toast_wrong_credentials">Nom d\'utilisateur ou mot de passe incorrect.</string>
@@ -95,7 +95,7 @@
     <!-- Tabs -->
     <string name="tabs_label_friends">Amis</string>
     <string name="tabs_label_home">Domicile</string>
-    <string name="tabs_label_feed">Activité</string>
+    <string name="tabs_label_activities">Activités</string>
     <string name="tabs_label_profile">Profil</string>
     <string name="tabs_label_pictures">Photos</string>
     <string name="tabs_label_settings">Paramètres</string>
@@ -121,9 +121,7 @@
     <string name="notification_service_description_status">Votre ami, %1$s a changé de statut de %2$s pour %3$s.</string>
     <!-- Avatars -->
     <string name="avatar_dropdown_label_select">Changer d\'avatar</string>
-    <string name="avatar_dropdown_label_favorite">Ajouter aux favoris</string>
     <string name="avatar_dropdown_label_remove_favorite">Supprimer des favoris</string>
-    <string name="avatar_dropdown_toast_not_implemented">Cette fonctionnalité n\'est pas encore implémentée ! Revenez plus tard.</string>
     <string name="avatar_dropdown_toast_select_avatar">Avatar sélectionné !</string>
     <string name="avatar_title_description">Description</string>
     <string name="avatar_title_created_at">Date de création</string>
@@ -216,12 +214,15 @@
     <string name="misc_exit_toast_label">Appuyez à nouveau pour quitter.</string>
     <!-- User -->
     <string name="user_dropdown_view_groups">Voir les groupes</string>
+    <string name="user_dropdown_view_worlds">Voir les mondes</string>
+    <string name="user_dropdown_view_avatars">Voir les avatars</string>
+    <string name="user_dropdown_view_favorites">Voir les favoris</string>
     <string name="user_dropdown_edit_profile">Modifier votre profil</string>
     <!-- Profile Edit Dialog -->
     <string name="profile_edit_dialog_title_status">Statut</string>
     <string name="profile_edit_dialog_title_status_description">Description du statut</string>
     <string name="profile_edit_dialog_title_bio">Bio</string>
-    <string name="profile_edit_dialog_title_bio_links">Liens</string>
+    <string name="profile_edit_dialog_title_bio_links">Liens sociaux</string>
     <string name="profile_edit_dialog_button_update">Mettre à jour</string>
     <string name="profile_edit_dialog_button_cancel">Annuler</string>
     <string name="profile_edit_dialog_toast_updated">Profil actualisé.</string>
@@ -231,4 +232,28 @@
     <!-- Widgets -->
     <string name="widget_name_friend_list">Voir les emplacements actuels des amis</string>
     <string name="widget_name_loading_text">L\'horizon est lumineux, mon ami.</string>
+    <string-array name="favorites_selection_options">
+        <item>Mondes</item>
+        <item>Avatars</item>
+    </string-array>
+    <string name="favorite_label_add">Ajouter aux favoris</string>
+    <string name="favorite_label_remove">Retirer des favoris</string>
+    <string name="favorite_toast_favorite_added">%1$s a été ajouter aux favoris.</string>
+    <string name="favorite_toast_favorite_added_failed">L\'ajout de %1$s aux favoris a échoué.</string>
+    <string name="favorite_toast_favorite_removed">%1$s a été supprimé des favoris.</string>
+    <string name="favorite_toast_favorite_removed_failed">La suppression de %1$s des favoris a échoué.</string>
+    <string name="favorite_dialog_button_add">Ajouter</string>
+    <string name="favorite_dialog_button_cancel">Annuler</string>
+    <string name="favorite_dialog_title">"Ajouter aux favoris"</string>
+    <string name="favorite_page_title">Afficher les favoris</string>
+    <!-- Activities -->
+    <string-array name="activities_selection_options">
+        <item>Flux</item>
+        <item>Notifications</item>
+        <item>Activité de groupe</item>
+    </string-array>
+    <!-- Worlds -->
+    <string name="worlds_page_title">Monde de %1$s</string>
+    <!-- Avatars -->
+    <string name="avatars_page_title">Afficher les avatars</string>
 </resources>

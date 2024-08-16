@@ -35,7 +35,7 @@
     <string name="auth_button_text">Подтвердить</string>
     <string name="auth_button_paste">Вставить</string>
     <!-- Main -->
-    <string name="main_search_placeholder">Поиск миров, пользователей и аватаров…</string>
+    <string name="main_search_placeholder">Search for worlds, users or avatars…</string>
     <!-- Profile -->
     <string name="profile_label_current_location">Текущее расположение</string>
     <string name="profile_label_biography">О себе</string>
@@ -95,7 +95,7 @@
     <!-- Tabs -->
     <string name="tabs_label_friends">Друзья</string>
     <string name="tabs_label_home">Главная</string>
-    <string name="tabs_label_feed">Лента</string>
+    <string name="tabs_label_activities">Activities</string>
     <string name="tabs_label_profile">Профиль</string>
     <string name="tabs_label_pictures">Картинки</string>
     <string name="tabs_label_settings">Настройки</string>
@@ -121,9 +121,7 @@
     <string name="notification_service_description_status">Ваш друг, %1$s изменил его статус с %2$s на %3$s.</string>
     <!-- Avatars -->
     <string name="avatar_dropdown_label_select">Change to Avatar</string>
-    <string name="avatar_dropdown_label_favorite">Добавить в избранное</string>
     <string name="avatar_dropdown_label_remove_favorite">Удалить из избранного</string>
-    <string name="avatar_dropdown_toast_not_implemented">Эта страница еще не реализована! Возвращайтесь позже.</string>
     <string name="avatar_dropdown_toast_select_avatar">Аватар выбран!</string>
     <string name="avatar_title_description">Описание</string>
     <string name="avatar_title_created_at">Дата создания</string>
@@ -216,12 +214,15 @@
     <string name="misc_exit_toast_label">Нажмите еще раз для выхода.</string>
     <!-- User -->
     <string name="user_dropdown_view_groups">Показать группы</string>
+    <string name="user_dropdown_view_worlds">View Worlds</string>
+    <string name="user_dropdown_view_avatars">View Avatars</string>
+    <string name="user_dropdown_view_favorites">View Favorites</string>
     <string name="user_dropdown_edit_profile">Редактировать профиль</string>
     <!-- Profile Edit Dialog -->
     <string name="profile_edit_dialog_title_status">Статус</string>
     <string name="profile_edit_dialog_title_status_description">Описание статуса</string>
     <string name="profile_edit_dialog_title_bio">О себе</string>
-    <string name="profile_edit_dialog_title_bio_links">Био ссылки</string>
+    <string name="profile_edit_dialog_title_bio_links">Social Links</string>
     <string name="profile_edit_dialog_button_update">Обновить</string>
     <string name="profile_edit_dialog_button_cancel">Отменить</string>
     <string name="profile_edit_dialog_toast_updated">Профиль обновлён.</string>
@@ -231,4 +232,28 @@
     <!-- Widgets -->
     <string name="widget_name_friend_list">Посмотреть текущее местоположение друзей</string>
     <string name="widget_name_loading_text">Горизонт светлый, мой друг.</string>
+    <string-array name="favorites_selection_options">
+        <item>Worlds</item>
+        <item>Avatars</item>
+    </string-array>
+    <string name="favorite_label_add">Add to favorites</string>
+    <string name="favorite_label_remove">Remove from favorites</string>
+    <string name="favorite_toast_favorite_added">Added %1$s to favorites.</string>
+    <string name="favorite_toast_favorite_added_failed">Adding %1$s to favorites failed.</string>
+    <string name="favorite_toast_favorite_removed">Removed %1$s from favorites.</string>
+    <string name="favorite_toast_favorite_removed_failed">Removing %1$s from favorites failed.</string>
+    <string name="favorite_dialog_button_add">Add</string>
+    <string name="favorite_dialog_button_cancel">Cancel</string>
+    <string name="favorite_dialog_title">"Add Favorite"</string>
+    <string name="favorite_page_title">Showing Favorites</string>
+    <!-- Activities -->
+    <string-array name="activities_selection_options">
+        <item>Feed</item>
+        <item>Notifications</item>
+        <item>Group Activity</item>
+    </string-array>
+    <!-- Worlds -->
+    <string name="worlds_page_title">%1$s\'s Worlds</string>
+    <!-- Avatars -->
+    <string name="avatars_page_title">Viewing avatars</string>
 </resources>

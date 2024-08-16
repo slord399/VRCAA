@@ -66,7 +66,6 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.CurrentTab
-import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabDisposable
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import cc.sovellus.vrcaa.R
@@ -75,9 +74,12 @@ import cc.sovellus.vrcaa.manager.ApiManager.cache
 import cc.sovellus.vrcaa.ui.components.dialog.ProfileEditDialog
 import cc.sovellus.vrcaa.ui.components.dialog.SingleButtonDialog
 import cc.sovellus.vrcaa.ui.components.input.ComboInput
+import cc.sovellus.vrcaa.ui.screen.avatars.AvatarsScreen
+import cc.sovellus.vrcaa.ui.screen.favorites.FavoritesScreen
 import cc.sovellus.vrcaa.ui.screen.group.UserGroupsScreen
 import cc.sovellus.vrcaa.ui.screen.search.SearchResultScreen
-import cc.sovellus.vrcaa.ui.tabs.FeedTab
+import cc.sovellus.vrcaa.ui.screen.worlds.WorldsScreen
+import cc.sovellus.vrcaa.ui.tabs.ActivitiesTab
 import cc.sovellus.vrcaa.ui.tabs.FriendsTab
 import cc.sovellus.vrcaa.ui.tabs.HomeTab
 import cc.sovellus.vrcaa.ui.tabs.ProfileTab
@@ -109,7 +111,7 @@ class NavigationScreen : Screen {
             )
         }
 
-        val tabs = listOf(HomeTab, FriendsTab, FeedTab, ProfileTab, SettingsTab)
+        val tabs = listOf(HomeTab, FriendsTab, ActivitiesTab, ProfileTab, SettingsTab)
 
         TabNavigator(
             HomeTab,
@@ -133,23 +135,16 @@ class NavigationScreen : Screen {
             BackHandler(
                 enabled = true,
                 onBack = {
-                    pressBackCounter++
-                    if (model.tabHistory.isNotEmpty())
+                    if (pressBackCounter == 0 && tabNavigator.current != HomeTab)
                     {
-                        val tab = model.tabHistory.last()
-                        tabNavigator.current = tab
-                        model.tabHistory.removeLast()
-                        pressBackCounter = 0
+                        tabNavigator.current = HomeTab
+                    } else {
+                        pressBackCounter++
                     }
-                    else
+
+                    if (tabNavigator.current == HomeTab)
                     {
-                        if (pressBackCounter == 2)
-                        {
-                            if (context is Activity)
-                                context.finish()
-                            pressBackCounter = 0
-                        }
-                        else
+                        if (pressBackCounter == 1)
                         {
                             Toast.makeText(
                                 context,
@@ -157,13 +152,19 @@ class NavigationScreen : Screen {
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
+
+                        if (pressBackCounter == 2)
+                        {
+                            if (context is Activity)
+                                context.finish()
+                        }
                     }
                 }
             )
 
             Scaffold(
                 topBar = {
-                    if (tabNavigator.current.options.index.toInt() == 0) {
+                    if (tabNavigator.current.options.index == HomeTab.options.index) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.Center,
@@ -250,7 +251,7 @@ class NavigationScreen : Screen {
                             }
                         }
                     }
-                    else if (tabNavigator.current.options.index.toInt() == 1) {
+                    else if (tabNavigator.current.options.index == FriendsTab.options.index) {
                         TopAppBar(
                             title = { Text(
                                 text = stringResource(id = R.string.tabs_label_friends),
@@ -259,7 +260,7 @@ class NavigationScreen : Screen {
                             ) }
                         )
                     }
-                    else if (tabNavigator.current.options.index.toInt() == 2) {
+                    else if (tabNavigator.current.options.index == ProfileTab.options.index) {
                         TopAppBar(
                             actions = {
                                 IconButton(onClick = { isMenuExpanded = true }) {
@@ -293,6 +294,31 @@ class NavigationScreen : Screen {
                                                 },
                                                 text = { Text(stringResource(R.string.user_dropdown_view_groups)) }
                                             )
+                                            DropdownMenuItem(
+                                                onClick = {
+                                                    cache.getProfile()?.let {
+                                                        navigator.push(
+                                                            WorldsScreen(it.displayName, it.id, true)
+                                                        )
+                                                    }
+                                                    isMenuExpanded = false
+                                                },
+                                                text = { Text(stringResource(R.string.user_dropdown_view_worlds)) }
+                                            )
+                                            DropdownMenuItem(
+                                                onClick = {
+                                                    navigator.push(AvatarsScreen())
+                                                    isMenuExpanded = false
+                                                },
+                                                text = { Text(stringResource(R.string.user_dropdown_view_avatars)) }
+                                            )
+                                            DropdownMenuItem(
+                                                onClick = {
+                                                    navigator.push(FavoritesScreen())
+                                                    isMenuExpanded = false
+                                                },
+                                                text = { Text(stringResource(R.string.user_dropdown_view_favorites)) }
+                                            )
                                         }
                                     }
                                 }
@@ -304,25 +330,16 @@ class NavigationScreen : Screen {
                             ) }
                         )
                     }
-                    else if (tabNavigator.current.options.index.toInt() == 3) {
+                    else if (tabNavigator.current.options.index == ActivitiesTab.options.index) {
                         TopAppBar(
                             title = { Text(
-                                text = stringResource(id = R.string.tabs_label_feed),
+                                text = stringResource(id = R.string.tabs_label_activities),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             ) }
                         )
                     }
-                    else if (tabNavigator.current.options.index.toInt() == 4) {
-                        TopAppBar(
-                            title = { Text(
-                                text = stringResource(id = R.string.tabs_label_pictures),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            ) }
-                        )
-                    }
-                    else if (tabNavigator.current.options.index.toInt() == 5) {
+                    else if (tabNavigator.current.options.index == SettingsTab.options.index) {
                         TopAppBar(
                             title = { Text(
                                 text = stringResource(id = R.string.tabs_label_settings),
@@ -510,7 +527,6 @@ class NavigationScreen : Screen {
                             NavigationBarItem(
                                 selected = tabNavigator.current.key == tab.key,
                                 onClick = {
-                                    model.tabHistory.add(tabNavigator.current)
                                     tabNavigator.current = tab
                                 },
                                 icon = { Icon(painter = tab.options.icon!!, contentDescription = tab.options.title) },

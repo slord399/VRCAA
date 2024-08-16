@@ -3,7 +3,16 @@ package cc.sovellus.vrcaa.api.vrchat
 import android.util.Log
 import cc.sovellus.vrcaa.BuildConfig
 import cc.sovellus.vrcaa.api.BaseClient
+import cc.sovellus.vrcaa.api.vrchat.models.Avatar
+import cc.sovellus.vrcaa.api.vrchat.models.Avatars
 import cc.sovellus.vrcaa.api.vrchat.models.Favorite
+import cc.sovellus.vrcaa.api.vrchat.models.FavoriteAdd
+import cc.sovellus.vrcaa.api.vrchat.models.FavoriteAvatar
+import cc.sovellus.vrcaa.api.vrchat.models.FavoriteAvatars
+import cc.sovellus.vrcaa.api.vrchat.models.FavoriteGroups
+import cc.sovellus.vrcaa.api.vrchat.models.FavoriteLimits
+import cc.sovellus.vrcaa.api.vrchat.models.FavoriteWorld
+import cc.sovellus.vrcaa.api.vrchat.models.FavoriteWorlds
 import cc.sovellus.vrcaa.api.vrchat.models.Favorites
 import cc.sovellus.vrcaa.api.vrchat.models.FileMetadata
 import cc.sovellus.vrcaa.api.vrchat.models.Friend
@@ -380,6 +389,42 @@ class VRChatApi : BaseClient() {
         }
     }
 
+    suspend fun getWorldsByUserId(
+        userId: String,
+        private: Boolean = false,
+        n: Int = 50,
+        offset: Int = 0,
+        worlds: ArrayList<World> = arrayListOf()
+    ): ArrayList<World> {
+
+        val headers = Headers.Builder()
+
+        headers["User-Agent"] = userAgent
+
+        val releaseStatus = if (private) { "all" } else { "public" }
+
+        val result = doRequest(
+            method = "GET",
+            url = "$apiBase/worlds?releaseStatus=$releaseStatus&sort=updated&order=descending&userId=$userId&n=$n&offset=$offset",
+            headers = headers,
+            body = null
+        )
+
+        val response = handleRequest(result)
+
+        val temp: ArrayList<World> = worlds
+        val json = Gson().fromJson(response, Worlds::class.java)
+        json?.forEach { world ->
+            temp.add(world)
+        }
+
+        return if (json == null) {
+            worlds
+        } else {
+            getWorldsByUserId(userId, private, n, offset + n, worlds)
+        }
+    }
+
     suspend fun getWorld(id: String): World {
 
         val headers = Headers.Builder()
@@ -394,7 +439,10 @@ class VRChatApi : BaseClient() {
         )
 
         val response = handleRequest(result)
-        return Gson().fromJson(response, World::class.java)
+
+        // Cheap workaround
+        val json = Gson().fromJson(response, World::class.java)
+        return json ?: World(id = "null")
     }
 
     suspend fun getUsers(
@@ -431,6 +479,83 @@ class VRChatApi : BaseClient() {
         }
     }
 
+    suspend fun getFavoriteLimits(): FavoriteLimits? {
+
+        val headers = Headers.Builder()
+
+        headers["User-Agent"] = userAgent
+
+        val result = doRequest(
+            method = "GET",
+            url = "$apiBase/auth/user/favoritelimits",
+            headers = headers,
+            body = null
+        )
+
+        val response = handleRequest(result)
+        return Gson().fromJson(response, FavoriteLimits::class.java)
+    }
+
+    suspend fun getFavoriteGroups(type: String): FavoriteGroups? {
+
+        val headers = Headers.Builder()
+
+        headers["User-Agent"] = userAgent
+
+        val result = doRequest(
+            method = "GET",
+            url = "$apiBase/favorite/groups?type=$type",
+            headers = headers,
+            body = null
+        )
+
+        val response = handleRequest(result)
+        return Gson().fromJson(response, FavoriteGroups::class.java)
+    }
+
+    //
+
+    suspend fun addFavorite(
+        type: String,
+        id: String,
+        tag: String
+    ): FavoriteAdd? {
+
+        val headers = Headers.Builder()
+
+        headers["User-Agent"] = userAgent
+
+        val body = "{\"type\":\"$type\",\"favoriteId\":\"$id\",\"tags\":[\"$tag\"]}"
+
+        val result = doRequest(
+            method = "POST",
+            url = "$apiBase/favorites",
+            headers = headers,
+            body = body
+        )
+
+        val response = handleRequest(result)
+        return Gson().fromJson(response, FavoriteAdd::class.java)
+    }
+
+    suspend fun removeFavorite(
+        id: String
+    ): Boolean {
+
+        val headers = Headers.Builder()
+
+        headers["User-Agent"] = userAgent
+
+        val result = doRequest(
+            method = "DELETE",
+            url = "$apiBase/favorites/$id",
+            headers = headers,
+            body = null
+        )
+
+        return result is Result.Succeeded
+    }
+
     suspend fun getFavorites(
         type: String,
         n: Int = 50,
@@ -461,6 +586,106 @@ class VRChatApi : BaseClient() {
             favorites
         } else {
             getFavorites(type, n, offset + n, temp)
+        }
+    }
+
+    suspend fun getFavorites(
+        type: String,
+        tag: String,
+        n: Int = 50,
+        offset: Int = 0,
+        favorites: ArrayList<Favorite> = arrayListOf()
+    ): ArrayList<Favorite> {
+
+        val headers = Headers.Builder()
+
+        headers["User-Agent"] = userAgent
+
+        val result = doRequest(
+            method = "GET",
+            url = "$apiBase/favorites?type=$type&n=$n&offset=$offset&tag=$tag",
+            headers = headers,
+            body = null
+        )
+
+        val response = handleRequest(result)
+
+        val temp: ArrayList<Favorite> = favorites
+        val json = Gson().fromJson(response, Favorites::class.java)
+        json?.forEach { favorite ->
+            temp.add(favorite)
+        }
+
+        return if (json == null) {
+            favorites
+        } else {
+            getFavorites(type, n, offset + n, temp)
+        }
+    }
+
+    suspend fun getFavoriteAvatars(
+        tag: String,
+        n: Int = 50,
+        offset: Int = 0,
+        favorites: ArrayList<FavoriteAvatar> = arrayListOf()
+    ): ArrayList<FavoriteAvatar> {
+
+        val headers = Headers.Builder()
+
+        headers["User-Agent"] = userAgent
+
+        val result = doRequest(
+            method = "GET",
+            url = "$apiBase/avatars/favorites?n=$n&offset=$offset&tag=$tag",
+            headers = headers,
+            body = null
+        )
+
+        val response = handleRequest(result)
+
+        val temp: ArrayList<FavoriteAvatar> = favorites
+        val json = Gson().fromJson(response, FavoriteAvatars::class.java)
+        json?.forEach { favorite ->
+            temp.add(favorite)
+        }
+
+        return if (json == null) {
+            favorites
+        } else {
+            getFavoriteAvatars(tag, n, offset + n, temp)
+        }
+    }
+
+    suspend fun getFavoriteWorlds(
+        tag: String,
+        n: Int = 50,
+        offset: Int = 0,
+        favorites: ArrayList<FavoriteWorld> = arrayListOf()
+    ): ArrayList<FavoriteWorld> {
+
+        val headers = Headers.Builder()
+
+        headers["User-Agent"] = userAgent
+
+        val result = doRequest(
+            method = "GET",
+            url = "$apiBase/worlds/favorites?n=$n&offset=$offset&tag=$tag",
+            headers = headers,
+            body = null
+        )
+
+        val response = handleRequest(result)
+
+        val temp: ArrayList<FavoriteWorld> = favorites
+        val json = Gson().fromJson(response, FavoriteWorlds::class.java)
+        json?.forEach { favorite ->
+            temp.add(favorite)
+        }
+
+        return if (json == null) {
+            favorites
+        } else {
+            getFavoriteWorlds(tag, n, offset + n, temp)
         }
     }
 
@@ -513,6 +738,38 @@ class VRChatApi : BaseClient() {
 
         val response = handleRequest(result)
         return Gson().fromJson(response, cc.sovellus.vrcaa.api.vrchat.models.Avatar::class.java)
+    }
+
+    suspend fun getOwnAvatars(
+        n: Int = 50,
+        offset: Int = 0,
+        avatars: ArrayList<Avatar> = arrayListOf()
+    ): ArrayList<Avatar> {
+
+        val headers = Headers.Builder()
+
+        headers["User-Agent"] = userAgent
+
+        val result = doRequest(
+            method = "GET",
+            url = "$apiBase/avatars?releaseStatus=all&sort=updated&order=descending&user=me&n=$n&offset=$offset",
+            headers = headers,
+            body = null
+        )
+
+        val response = handleRequest(result)
+
+        val temp: ArrayList<Avatar> = avatars
+        val json = Gson().fromJson(response, Avatars::class.java)
+        json?.forEach { avatar ->
+            temp.add(avatar)
+        }
+
+        return if (json == null) {
+            avatars
+        } else {
+            getOwnAvatars(n, offset + n, temp)
+        }
     }
 
     suspend fun getGroups(

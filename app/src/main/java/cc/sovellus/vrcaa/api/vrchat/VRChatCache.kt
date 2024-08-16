@@ -4,6 +4,7 @@ import cc.sovellus.vrcaa.api.vrchat.models.Friend
 import cc.sovellus.vrcaa.api.vrchat.models.User
 import cc.sovellus.vrcaa.api.vrchat.models.World
 import cc.sovellus.vrcaa.manager.ApiManager.api
+import cc.sovellus.vrcaa.manager.FavoriteManager
 import cc.sovellus.vrcaa.manager.FriendManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,15 +47,9 @@ class VRChatCache : CoroutineScope {
             val friendList: MutableList<Friend> = mutableListOf()
             val recentWorlds: MutableList<WorldCache> = mutableListOf()
 
-            val favorites = api.getFavorites("friend")
             var friends = api.getFriends(false)
 
             friends.forEach { friend->
-                favorites.find { favorite ->
-                    favorite.favoriteId == friend.id
-                }?.let {
-                    friend.isFavorite = true
-                }
                 if (friend.location.contains("wrld_")) {
                     val world = api.getWorld(friend.location.split(":")[0])
                     val cache = WorldCache(
@@ -71,11 +66,6 @@ class VRChatCache : CoroutineScope {
             friends = api.getFriends(true)
 
             friends.forEach { friend->
-                favorites.find { favorite ->
-                    favorite.favoriteId == friend.id
-                }?.let {
-                    friend.isFavorite = true
-                }
                 friendList.add(friend)
             }
 
@@ -92,6 +82,7 @@ class VRChatCache : CoroutineScope {
             recentlyVisited = recentWorlds
 
             FriendManager.setFriends(friendList)
+            FavoriteManager.refresh()
 
             listeners.forEach { listener ->
                 listener?.cacheUpdated()
