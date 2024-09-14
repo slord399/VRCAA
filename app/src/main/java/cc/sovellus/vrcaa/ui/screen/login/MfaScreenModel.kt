@@ -36,10 +36,12 @@ class MfaScreenModel(
                     Toast.LENGTH_SHORT
                 ).show()
             } else {
+                launch { CacheManager.buildCache() }
                 preferences.twoFactorToken = result
                 navigator.replace(NavigationScreen())
-                CacheManager.buildCache()
             }
         }
+
+        code.value = ""
     }
 }

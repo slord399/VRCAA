@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class HomeScreenModel(context: Context) : ScreenModel {
+class HomeScreenModel : ScreenModel {
 
     private var friendsListFlow = MutableStateFlow(mutableStateListOf<Friend>())
     var friendsList = friendsListFlow.asStateFlow()
@@ -30,20 +30,19 @@ class HomeScreenModel(context: Context) : ScreenModel {
         }
     }
 
-    val initialLoadComplete = mutableStateOf(false)
+    val isUpdatingCache = mutableStateOf(true)
 
     private val cacheListener = object : CacheManager.CacheListener {
         override fun recentlyVisitedUpdated(worlds: MutableList<WorldCache>) {
             recentlyVisitedFlow.value = worlds.toMutableStateList()
         }
 
-        override fun cacheUpdated() {
-            if (!initialLoadComplete.value) {
-                initialLoadComplete.value = true
-            }
+        override fun startCacheRefresh() {
+            isUpdatingCache.value = true
+        }
 
-            val intent = Intent(context, FriendWidgetReceiver::class.java).apply { action = "FRIEND_LOCATION_UPDATE" }
-            context.sendBroadcast(intent)
+        override fun endCacheRefresh() {
+            isUpdatingCache.value = false
             fetchContent()
         }
     }

@@ -32,7 +32,7 @@ fun RowItem(
             defaultElevation = 2.dp
         ),
         modifier = Modifier
-            .height(190.dp)
+            .height(185.dp)
             .width(240.dp)
             .fillMaxWidth()
             .clickable(onClick = { onClick() })
@@ -55,7 +55,7 @@ fun RowItem(
             Text(
                 text = name,
                 textAlign = TextAlign.Start,
-                modifier = Modifier.weight(0.80f),
+                modifier = Modifier.weight(0.80f).padding(top = 2.dp, start = 4.dp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

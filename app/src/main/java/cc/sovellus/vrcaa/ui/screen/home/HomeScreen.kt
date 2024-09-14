@@ -42,13 +42,12 @@ class HomeScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val context = LocalContext.current
-        val model = navigator.rememberNavigatorScreenModel { HomeScreenModel(context) }
+        val model = navigator.rememberNavigatorScreenModel { HomeScreenModel() }
 
         val friends = model.friendsList.collectAsState().value
         val recent = model.recentlyVisited.collectAsState().value
 
-        if (!model.initialLoadComplete.value)
+        if (model.isUpdatingCache.value)
         {
             LoadingIndicatorScreen().Content()
         } else {
