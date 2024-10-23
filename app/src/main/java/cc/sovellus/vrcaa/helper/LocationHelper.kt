@@ -82,12 +82,12 @@ object LocationHelper {
                 } else if (result.groupId.isNotEmpty()) {
                     result.instanceType = "Group"
                     if (result.groupAccessType.isNotEmpty()) {
-                        if (result.groupAccessType == "public") {
-                            result.groupAccessType = "Public"
-                            result.instanceType = "Group"
-                        } else {
+                        if (result.groupAccessType == "plus") {
                             result.groupAccessType = "Plus"
                             result.instanceType = "Group+"
+                        } else {
+                            result.groupAccessType = "Public"
+                            result.instanceType = "Group"
                         }
                     }
                 }
