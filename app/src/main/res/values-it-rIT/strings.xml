@@ -31,6 +31,7 @@
     <string name="main_search_placeholder">Search for worlds, users or avatars…</string>
     <!-- Profile -->
     <string name="profile_label_current_location">Posizione attuale</string>
+    <string name="profile_label_note">Note</string>
     <string name="profile_label_biography">Bio</string>
     <string name="profile_text_no_biography">Nessuna descrizione specificata.</string>
     <string name="profile_user_dropdown_manage_notifications">Gestire le notifiche</string>
@@ -39,6 +40,7 @@
     <string name="profile_user_dropdown_invite_self">Invite myself</string>
     <string name="profile_user_not_found_message">L\'utente non esiste.</string>
     <string name="profile_user_avatar_private">Avatar privato!</string>
+    <string name="profile_user_avatar_unreachable">Avatar is unreachable!</string>
     <string name="profile_user_toast_invite_sent">Invito inviato! Controlla il tuo client.</string>
     <string name="profile_mutual_groups_text">Mutual Groups</string>
     <!-- Search -->
@@ -65,7 +67,13 @@
     </string-array>
     <!-- Settings -->
     <string name="settings_item_about">Informazioni</string>
+    <string name="settings_item_about_description">More information about your device and VRCAA</string>
+    <string name="settings_item_theming">Appearance</string>
+    <string name="settings_item_theming_description">Appearance configuration, minimalist mode</string>
     <string name="settings_item_rich_presence">Rich Presence (Sperimentale)</string>
+    <string name="settings_item_rich_presence_description">Discord rich-presence integration</string>
+    <string name="settings_item_advanced_settings">Advanced</string>
+    <string name="settings_item_advanced_settings_description">Advanced logging and features</string>
     <string name="settings_item_logout">Esci</string>
     <!-- Worlds -->
     <string name="world_label_description">Descrizione</string>
@@ -86,6 +94,8 @@
     <!-- Tabs -->
     <string name="tabs_label_friends">Friends</string>
     <string name="tabs_label_home">Home</string>
+    <string name="tabs_label_favorites">Favorites</string>
+    <string name="tabs_label_feed">Feed</string>
     <string name="tabs_label_activities">Activities</string>
     <string name="tabs_label_profile">Profile</string>
     <string name="tabs_label_pictures">Pictures</string>
@@ -129,7 +139,7 @@
     <string name="feed_location_label">GPS</string>
     <string name="feed_location_text">è andato a</string>
     <string name="feed_status_label">Stato</string>
-    <string name="feed_status_text">{0} ha modificato lo stato in {1}</string>
+    <string name="feed_status_text">ha modificato lo stato in</string>
     <string name="feed_added_label">Amico aggiunto</string>
     <string name="feed_added_text">ti ha aggiunto come amico.</string>
     <string name="feed_removed_label">Amico rimosso</string>
@@ -177,6 +187,7 @@
     <string name="group_page_label_description">Description</string>
     <string name="group_page_label_rules">Rules</string>
     <string name="group_page_dropdown_view_author">View Author\'s Profile</string>
+    <string name="group_page_dropdown_accept_invite">Accept Invite</string>
     <string name="group_page_dropdown_request_invite">Request Invite</string>
     <string name="group_page_dropdown_request_invite_cancel">Cancel Invite Request</string>
     <string name="group_page_dropdown_join_group">Join Group</string>
@@ -234,6 +245,12 @@
     <string name="favorite_dialog_button_cancel">Cancel</string>
     <string name="favorite_dialog_title">"Add Favorite"</string>
     <string name="favorite_page_title">Showing Favorites</string>
+    <string name="favorite_edit_title">Editing %1$s</string>
+    <string name="favorite_edit_display_name">Display Name</string>
+    <string name="favorite_edit_visibility">Visibility</string>
+    <string name="favorite_edit_discarded">Changes were discarded.</string>
+    <string name="favorite_edit_applied">Changes have been applied.</string>
+    <string name="favorite_dialog_button_edit">Edit</string>
     <!-- Activities -->
     <string-array name="activities_selection_options">
         <item>Feed</item>
@@ -261,4 +278,22 @@
     <string name="loading_text_avatar">Loading avatar…</string>
     <string name="loading_text_group">Loading group…</string>
     <string name="loading_text_instances">Loading instances…</string>
+    <!-- Theming -->
+    <string name="theme_page_title">Theme</string>
+    <string name="theme_page_minimalist_mode_text">Minimalist Mode</string>
+    <string name="theme_page_minimalist_mode_text_description">"Minimalist Mode helps content to fit on smaller screens."</string>
+    <string-array name="theme_page_selection_options">
+        <item>Light</item>
+        <item>Dark</item>
+        <item>System</item>
+    </string-array>
+    <string name="theme_page_section_theme_title">Theme</string>
+    <string name="theme_page_section_display_title">Display</string>
+    <!-- Advanced Settings -->
+    <string name="advanced_page_title">Advanced Settings</string>
+    <string name="advanced_page_network_logging">Network Logging</string>
+    <string name="advanced_page_network_logging_description">Intercept HTTP and WebSocket traffic</string>
+    <string name="advanced_page_view_network_logs">Show Network Logs</string>
+    <string name="advanced_page_battery_optimization">Disable Battery Optimizations</string>
+    <string name="advanced_page_battery_optimization_description">May help with not receiving real-time network events</string>
 </resources>

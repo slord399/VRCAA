@@ -1,29 +1,15 @@
-package cc.sovellus.vrcaa.ui.screen.activities
+package cc.sovellus.vrcaa.ui.screen.feed
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.RssFeed
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MultiChoiceSegmentedButtonRow
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -38,59 +24,31 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.manager.FeedManager
 import cc.sovellus.vrcaa.ui.components.layout.FeedItem
+import cc.sovellus.vrcaa.ui.screen.misc.LoadingIndicatorScreen
+import cc.sovellus.vrcaa.ui.screen.profile.UserProfileScreen
+import cc.sovellus.vrcaa.ui.screen.world.WorldInfoScreen
 
-class ActivitiesScreen : Screen {
+class FeedScreen : Screen {
 
     override val key = uniqueScreenKey
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
         val navigator: Navigator = LocalNavigator.currentOrThrow
-        val model = navigator.rememberNavigatorScreenModel { ActivitiesScreenModel() }
+        val model = navigator.rememberNavigatorScreenModel { FeedScreenModel() }
 
-        val options = stringArrayResource(R.array.activities_selection_options)
-        val icons = listOf(Icons.Filled.RssFeed, Icons.Filled.Notifications, Icons.Filled.Groups)
+        val state by model.state.collectAsState()
 
-        MultiChoiceSegmentedButtonRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp)
-        ) {
-            options.forEachIndexed { index, label ->
-                SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = options.size
-                    ),
-                    icon = {
-                        SegmentedButtonDefaults.Icon(active = index == model.currentIndex.intValue) {
-                            Icon(
-                                imageVector = icons[index],
-                                contentDescription = null,
-                                modifier = Modifier.size(SegmentedButtonDefaults.IconSize)
-                            )
-                        }
-                    },
-                    onCheckedChange = {
-                        model.currentIndex.intValue = index
-                    },
-                    checked = index == model.currentIndex.intValue
-                ) {
-                    Text(text = label, softWrap = true, maxLines = 1)
-                }
-            }
-        }
-
-        when (model.currentIndex.intValue) {
-            0 -> ShowFeed(model)
-            1 -> StubScreen()
-            2 -> StubScreen()
+        when (state) {
+            is FeedScreenModel.FeedState.Loading -> LoadingIndicatorScreen().Content()
+            is FeedScreenModel.FeedState.Result -> ShowScreen(model)
+            else -> {}
         }
     }
 
     @Composable
-    fun ShowFeed(model: ActivitiesScreenModel) {
+    fun ShowScreen(model: FeedScreenModel) {
+        val navigator = LocalNavigator.currentOrThrow
         val feed = model.feed.collectAsState()
 
         LazyColumn(
@@ -119,7 +77,7 @@ class ActivitiesScreen : Screen {
                             friendPictureUrl = item.friendPictureUrl,
                             feedTimestamp = item.feedTimestamp,
                             resourceStringTitle = R.string.feed_online_label,
-                            userId = item.friendId
+                            onClick = { navigator.parent?.parent?.push(UserProfileScreen(item.friendId)) }
                         )
                     }
 
@@ -136,7 +94,7 @@ class ActivitiesScreen : Screen {
                             friendPictureUrl = item.friendPictureUrl,
                             feedTimestamp = item.feedTimestamp,
                             resourceStringTitle = R.string.feed_offline_label,
-                            userId = item.friendId
+                            onClick = { navigator.parent?.parent?.push(UserProfileScreen(item.friendId)) }
                         )
                     }
 
@@ -155,7 +113,7 @@ class ActivitiesScreen : Screen {
                             friendPictureUrl = item.friendPictureUrl,
                             feedTimestamp = item.feedTimestamp,
                             resourceStringTitle = R.string.feed_location_label,
-                            userId = item.friendId
+                            onClick = { navigator.parent?.parent?.push(WorldInfoScreen(item.worldId)) }
                         )
                     }
 
@@ -174,7 +132,7 @@ class ActivitiesScreen : Screen {
                             friendPictureUrl = item.friendPictureUrl,
                             feedTimestamp = item.feedTimestamp,
                             resourceStringTitle = R.string.feed_status_label,
-                            userId = item.friendId
+                            onClick = { navigator.parent?.parent?.push(UserProfileScreen(item.friendId)) }
                         )
                     }
 
@@ -191,7 +149,7 @@ class ActivitiesScreen : Screen {
                             friendPictureUrl = item.friendPictureUrl,
                             feedTimestamp = item.feedTimestamp,
                             resourceStringTitle = R.string.feed_added_label,
-                            userId = item.friendId
+                            onClick = { navigator.parent?.parent?.push(UserProfileScreen(item.friendId)) }
                         )
                     }
 
@@ -208,7 +166,7 @@ class ActivitiesScreen : Screen {
                             friendPictureUrl = item.friendPictureUrl,
                             feedTimestamp = item.feedTimestamp,
                             resourceStringTitle = R.string.feed_removed_label,
-                            userId = item.friendId
+                            onClick = { navigator.parent?.parent?.push(UserProfileScreen(item.friendId)) }
                         )
                     }
 
@@ -225,25 +183,11 @@ class ActivitiesScreen : Screen {
                             friendPictureUrl = item.friendPictureUrl,
                             feedTimestamp = item.feedTimestamp,
                             resourceStringTitle = R.string.feed_friend_request_label,
-                            userId = item.friendId
+                            onClick = { navigator.parent?.parent?.push(UserProfileScreen(item.friendId)) }
                         )
                     }
                 }
             }
-        }
-    }
-
-    @Composable
-    fun StubScreen() {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .padding(1.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = "This functional has not been implemented.")
         }
     }
 }

@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import cc.sovellus.vrcaa.R
@@ -41,7 +40,7 @@ fun FriendItem(friend: Friend, callback: () -> Unit) {
         },
         leadingContent = {
             GlideImage(
-                model = friend.userIcon.ifEmpty { friend.currentAvatarImageUrl },
+                model = friend.userIcon.ifEmpty { friend.profilePicOverride.ifEmpty { friend.currentAvatarImageUrl } },
                 contentDescription = null,
                 modifier = Modifier
                     .size(56.dp)

@@ -24,6 +24,8 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.uniqueScreenKey
 import cc.sovellus.vrcaa.App
 import cc.sovellus.vrcaa.R
+import cc.sovellus.vrcaa.extension.currentThemeOption
+import cc.sovellus.vrcaa.ui.components.misc.Logo
 
 class LoadingIndicatorScreen : Screen {
 
@@ -38,19 +40,7 @@ class LoadingIndicatorScreen : Screen {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
-                modifier = Modifier
-                    .height(256.dp)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                Image(
-                    painter = if (isSystemInDarkTheme()) { painterResource(R.drawable.logo_dark) } else { painterResource(R.drawable.logo_white) },
-                    contentDescription = null,
-                    contentScale = ContentScale.FillHeight,
-                    alignment = Alignment.Center
-                )
-            }
+            Logo(size = 256.dp)
 
             LinearProgressIndicator(
                 modifier = Modifier.width(256.dp),

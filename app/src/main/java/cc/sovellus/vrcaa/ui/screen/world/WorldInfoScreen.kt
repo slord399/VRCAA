@@ -1,15 +1,16 @@
 package cc.sovellus.vrcaa.ui.screen.world
 
-
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cabin
@@ -72,13 +73,17 @@ class WorldInfoScreen(
 
     @Composable
     override fun Content() {
-        val context = LocalContext.current
         val model = rememberScreenModel { WorldInfoScreenModel(worldId) }
         val state by model.state.collectAsState()
 
         when (val result = state) {
-            is WorldInfoState.Loading -> LoadingIndicatorScreen().Content()
-            is WorldInfoState.Result -> MultiChoiceHandler(result.world, result.instances, model)
+            is WorldInfoScreenModel.WorldInfoState.Loading -> LoadingIndicatorScreen().Content()
+            is WorldInfoScreenModel.WorldInfoState.Result -> MultiChoiceHandler(
+                result.world,
+                result.instances,
+                model
+            )
+
             else -> {}
         }
     }
@@ -87,7 +92,7 @@ class WorldInfoScreen(
     @Composable
     fun MultiChoiceHandler(
         world: World?,
-        instances: MutableList<Pair<String, Instance>>,
+        instances: MutableList<Pair<String, Instance?>>,
         model: WorldInfoScreenModel
     ) {
         val navigator = LocalNavigator.currentOrThrow
@@ -116,11 +121,13 @@ class WorldInfoScreen(
                             }
                         },
 
-                        title = { Text(
-                            text = world.name,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        ) },
+                        title = {
+                            Text(
+                                text = world.name,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
                         actions = {
                             IconButton(onClick = { isMenuExpanded = true }) {
                                 Icon(
@@ -147,23 +154,7 @@ class WorldInfoScreen(
                                         if (FavoriteManager.isFavorite("world", world.id)) {
                                             DropdownMenuItem(
                                                 onClick = {
-                                                    model.removeFavorite { result ->
-                                                        if (result) {
-                                                            Toast.makeText(
-                                                                context,
-                                                                context.getString(R.string.favorite_toast_favorite_removed)
-                                                                    .format(world.name),
-                                                                Toast.LENGTH_SHORT
-                                                            ).show()
-                                                        } else {
-                                                            Toast.makeText(
-                                                                context,
-                                                                context.getString(R.string.favorite_toast_favorite_removed_failed)
-                                                                    .format(world.name),
-                                                                Toast.LENGTH_SHORT
-                                                            ).show()
-                                                        }
-                                                    }
+                                                    model.removeFavorite()
                                                     isMenuExpanded = false
                                                 },
                                                 text = { Text(stringResource(R.string.favorite_label_remove)) }
@@ -189,28 +180,18 @@ class WorldInfoScreen(
                         FavoriteDialog(
                             type = "world",
                             id = world.id,
-                            metadata = FavoriteManager.FavoriteMetadata(world.id, "", world.name, world.thumbnailImageUrl),
+                            metadata = FavoriteManager.FavoriteMetadata(
+                                world.id,
+                                "",
+                                world.name,
+                                world.thumbnailImageUrl
+                            ),
                             onDismiss = { favoriteDialogShown = false },
-                            onConfirmation = { result ->
-                                if (result) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.favorite_toast_favorite_added).format(world.name),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.favorite_toast_favorite_added_failed).format(world.name),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                                favoriteDialogShown = false
-                            }
+                            onConfirmation = { favoriteDialogShown = false }
                         )
                     }
 
-                    val options =  stringArrayResource(R.array.world_selection_options)
+                    val options = stringArrayResource(R.array.world_selection_options)
                     val icons = listOf(Icons.Filled.Cabin, Icons.Filled.LocationOn)
 
                     Column(
@@ -333,7 +314,10 @@ class WorldInfoScreen(
     }
 
     @Composable
-    fun ShowInstances(instances: MutableList<Pair<String, Instance>>, model: WorldInfoScreenModel) {
+    fun ShowInstances(
+        instances: MutableList<Pair<String, Instance?>>,
+        model: WorldInfoScreenModel
+    ) {
         val dialogState = remember { mutableStateOf(false) }
 
         if (dialogState.value) {
@@ -348,31 +332,31 @@ class WorldInfoScreen(
             )
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (instances.isEmpty()) {
-                item {
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(stringResource(R.string.world_instance_no_public_instances_message))
+        if (instances.isEmpty()) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(stringResource(R.string.world_instance_no_public_instances_message))
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                items(instances) { instance ->
+                    instance.second?.let { instanceObj ->
+                        InstanceItem(
+                            intent = instance.first,
+                            instance = instanceObj,
+                            onClick = {
+                                dialogState.value = true
+                                model.selectedInstanceId.value = instanceObj.id
+                            }
+                        )
                     }
-                }
-            } else {
-                items(instances.size) {
-                    val instance = instances[it]
-                    InstanceItem(
-                        intent = instance.first,
-                        instance = instance.second,
-                        onClick = {
-                            dialogState.value = true
-                            model.selectedInstanceId.value = instance.second.id
-                        }
-                    )
                 }
             }
         }

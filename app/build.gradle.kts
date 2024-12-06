@@ -6,22 +6,25 @@ plugins {
 
 android {
     namespace = "cc.sovellus.vrcaa"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "cc.sovellus.vrcaa"
         minSdk = 27
         targetSdk = 35
-        versionCode = 200100
-        versionName = "2.1.0"
+        versionCode = 200105
+        versionName = "2.1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         vectorDrawables {
             useSupportLibrary = true
         }
 
         buildConfigField("String", "GIT_HASH", "\"${getGitHash()}\"")
         buildConfigField("String", "GIT_BRANCH", "\"${getBranch()}\"")
+        buildConfigField("String", "DISCORD_URL", "\"https://discord.gg/aJs8qJXuT3\"")
+        buildConfigField("String", "CROWDIN_URL", "\"https://crowdin.com/project/vrcaa\"")
     }
 
     buildTypes {
@@ -34,25 +37,27 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
     buildFeatures {
         buildConfig = true
         compose = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
     }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            excludes += "META-INF/androidx.compose.material3_material3.version"
-        }
+
+    androidResources {
+        generateLocaleConfig = true
     }
 
     flavorDimensions += "type"
@@ -97,19 +102,20 @@ fun runGitCommand(command: ProcessBuilder) : String? {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.5")
-    implementation("androidx.activity:activity-compose:1.9.2")
-    implementation(platform("androidx.compose:compose-bom:2024.09.01"))
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.activity:activity-compose:1.9.3")
+    implementation(platform("androidx.compose:compose-bom:2024.10.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3-android:1.3.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose-android:2.8.5")
+    implementation("androidx.compose.material3:material3-android:1.3.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose-android:2.8.7")
+    implementation("androidx.appcompat:appcompat:1.7.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2024.09.01"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.10.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
@@ -124,13 +130,13 @@ dependencies {
     implementation("cafe.adriel.voyager:voyager-bottom-sheet-navigator:1.1.0-beta02")
     implementation("cafe.adriel.voyager:voyager-tab-navigator:1.1.0-beta02")
     implementation("cafe.adriel.voyager:voyager-transitions:1.1.0-beta02")
-    implementation("androidx.activity:activity-ktx:1.9.2")
+    implementation("androidx.activity:activity-ktx:1.9.3")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.33.2-alpha")
-    implementation("androidx.compose.material:material-icons-extended:1.7.1")
+    implementation("androidx.compose.material:material-icons-extended:1.7.5")
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.7")
     implementation("com.mikepenz:aboutlibraries-core:10.10.0")
     implementation("com.mikepenz:aboutlibraries-compose-m3-android:10.10.0@aar")
-    implementation ("androidx.glance:glance-appwidget:1.1.0")
-    implementation ("androidx.glance:glance-material3:1.1.0@aar")
+    implementation ("androidx.glance:glance-appwidget:1.1.1")
+    implementation ("androidx.glance:glance-material3:1.1.1@aar")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
 }

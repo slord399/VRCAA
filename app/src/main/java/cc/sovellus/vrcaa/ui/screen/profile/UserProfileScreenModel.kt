@@ -11,18 +11,17 @@ import cc.sovellus.vrcaa.api.vrchat.models.UserGroups
 import cc.sovellus.vrcaa.api.vrchat.models.World
 import cc.sovellus.vrcaa.manager.ApiManager.api
 import cc.sovellus.vrcaa.manager.FavoriteManager
-import cc.sovellus.vrcaa.manager.FriendManager
 import kotlinx.coroutines.launch
-
-sealed class UserProfileState {
-    data object Init : UserProfileState()
-    data object Loading : UserProfileState()
-    data class Result(val profile: LimitedUser?, val instance: Instance?, val worlds: ArrayList<World>, val groups: ArrayList<UserGroups.Group>) : UserProfileState()
-}
 
 class UserProfileScreenModel(
     private val userId: String
-) : StateScreenModel<UserProfileState>(UserProfileState.Init) {
+) : StateScreenModel<UserProfileScreenModel.UserProfileState>(UserProfileState.Init) {
+
+    sealed class UserProfileState {
+        data object Init : UserProfileState()
+        data object Loading : UserProfileState()
+        data class Result(val profile: LimitedUser?, val instance: Instance?, val worlds: ArrayList<World>, val groups: ArrayList<UserGroups.Group>) : UserProfileState()
+    }
 
     private val avatarProvider = JustHPartyProvider()
 
@@ -61,28 +60,56 @@ class UserProfileScreenModel(
     fun findAvatar(callback: ((userId: String?) -> Unit?)) {
         screenModelScope.launch {
             profile?.let {
-                val url = it.currentAvatarImageUrl
-                val fileId = url.substring(url.indexOf("file_"), url.lastIndexOf("/file") - 2)
+                val fileId = extractFileIdFromUrl(it.currentAvatarImageUrl)
 
-                api.getFileMetadata(fileId)?.let { metadata ->
-                    var name = metadata.name
+                if (fileId != null) {
+                    api.getFileMetadata(fileId)?.let { metadata ->
+                        var name = metadata.name
 
-                    name = name.substring(9) // skip first 9 characters, not required.
-                    name = name.substring(0, name.indexOf('-') - 1)
+                        name = name.substring(9)
+                        name = name.substring(0, name.indexOf('-') - 1)
 
-                    val avatars = avatarProvider.search(name)
-                    if (avatars.isNotEmpty()) {
-                       for (avatar in avatars) {
-                           if (avatar.name == name && avatar.authorId == metadata.ownerId) {
-                               callback(avatar.id)
-                               return@launch
-                           }
-                       }
+                        val searchAvatarsByName = avatarProvider.search(name)
+                        if (searchAvatarsByName.isNotEmpty()) {
+                            for (avatar in searchAvatarsByName) {
+                                avatar.imageUrl?.let {
+                                    val avatarFileId = extractFileIdFromUrl(avatar.imageUrl)
+                                    if (avatarFileId == fileId) {
+                                        callback(avatar.id)
+                                        return@launch
+                                    }
+                                }
+                            }
+                        }
+
+                        // fallback to using author search
+                        val searchAvatarsByAuthor = avatarProvider.searchByAuthor(metadata.ownerId)
+                        if (searchAvatarsByAuthor.isNotEmpty()) {
+                            for (avatar in searchAvatarsByAuthor) {
+                                avatar.imageUrl?.let {
+                                    val avatarFileId = extractFileIdFromUrl(avatar.imageUrl)
+                                    if (avatarFileId == fileId) {
+                                        callback(avatar.id)
+                                        return@launch
+                                    }
+                                }
+                            }
+                        }
+                        callback(null)
                     }
-                    callback(null)
                 }
             }
         }
+    }
+
+    private fun extractFileIdFromUrl(imageUrl: String): String? {
+        val startIndex = imageUrl.indexOf("file_")
+        val endIndex = imageUrl.indexOf("/", startIndex)
+        if (startIndex != -1 && endIndex != -1) {
+            val fileId = imageUrl.substring(startIndex, endIndex)
+            return fileId
+        }
+        return null
     }
 
     fun inviteToFriend(intent: String) {
@@ -95,8 +122,6 @@ class UserProfileScreenModel(
         screenModelScope.launch {
             profile?.let {
                 val result = FavoriteManager.removeFavorite("friend", it.id)
-                if (result)
-                    FriendManager.setIsFavorite(it.id, false)
                 callback(result)
             }
         }

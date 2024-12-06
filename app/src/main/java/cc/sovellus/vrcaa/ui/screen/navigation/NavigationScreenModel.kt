@@ -3,6 +3,7 @@ package cc.sovellus.vrcaa.ui.screen.navigation
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.compose.runtime.mutableIntStateOf
@@ -10,11 +11,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.os.bundleOf
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import cc.sovellus.vrcaa.App
 import cc.sovellus.vrcaa.activity.MainActivity
 import cc.sovellus.vrcaa.api.vrchat.VRChatApi
 import cc.sovellus.vrcaa.extension.avatarProvider
 import cc.sovellus.vrcaa.extension.avatarsAmount
-import cc.sovellus.vrcaa.extension.developerMode
 import cc.sovellus.vrcaa.extension.groupsAmount
 import cc.sovellus.vrcaa.extension.searchFeaturedWorlds
 import cc.sovellus.vrcaa.extension.sortWorlds
@@ -25,10 +26,9 @@ import cc.sovellus.vrcaa.service.PipelineService
 import kotlinx.coroutines.launch
 
 
-class NavigationScreenModel(
-    private val context: Context
-) : ScreenModel {
+class NavigationScreenModel : ScreenModel {
 
+    private val context: Context = App.getContext()
     private val preferences: SharedPreferences = context.getSharedPreferences("vrcaa_prefs", Context.MODE_PRIVATE)
 
     var searchModeActivated = mutableStateOf(false)
@@ -36,8 +36,6 @@ class NavigationScreenModel(
     var searchHistory = mutableListOf<String>()
     var hasNoInternet = mutableStateOf(false)
     var invalidSession = mutableStateOf(false)
-
-    val developerMode = mutableStateOf(preferences.developerMode)
 
     var featuredWorlds = mutableStateOf(preferences.searchFeaturedWorlds)
     var sortWorlds = mutableStateOf(preferences.sortWorlds)
@@ -59,6 +57,7 @@ class NavigationScreenModel(
                 bundle.putBoolean("INVALID_SESSION", true)
 
                 val intent = Intent(context, MainActivity::class.java)
+                intent.setFlags(FLAG_ACTIVITY_NEW_TASK)
                 intent.putExtras(bundle)
                 context.startActivity(intent)
 
@@ -112,7 +111,7 @@ class NavigationScreenModel(
         ).show()
     }
 
-    fun applySettings() {
+    fun applySettings(silent: Boolean = false) {
         preferences.searchFeaturedWorlds = featuredWorlds.value
         preferences.sortWorlds = sortWorlds.value
         preferences.worldsAmount = worldsAmount.intValue
@@ -121,10 +120,12 @@ class NavigationScreenModel(
         preferences.avatarsAmount = avatarsAmount.intValue
         preferences.avatarProvider = avatarProvider.value
 
-        Toast.makeText(
-            context,
-            "Applied settings.",
-            Toast.LENGTH_SHORT
-        ).show()
+        if (!silent) {
+            Toast.makeText(
+                context,
+                "Applied settings.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 }

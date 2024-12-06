@@ -10,9 +10,11 @@ import kotlin.jvm.optionals.getOrNull
 
 object CacheManager {
 
-    private lateinit var profile: User
+    private var profile: User? = null
     private var worldList: MutableList<WorldCache> = mutableListOf()
     private var recentWorldList: MutableList<WorldCache> = mutableListOf()
+
+    private var cacheRefreshing: Boolean = false
 
     data class WorldCache(
         val id: String,
@@ -34,6 +36,9 @@ object CacheManager {
     }
 
     suspend fun buildCache() {
+
+        cacheRefreshing = true
+
         listeners.forEach { listener ->
             listener?.startCacheRefresh()
         }
@@ -49,10 +54,12 @@ object CacheManager {
         api.getFriends(false).forEach { friend->
             if (friend.location.contains("wrld_")) {
                 val world = api.getWorld(friend.location.split(":")[0])
-                worldList.add(WorldCache(world.id).apply {
-                    name = world.name
-                    thumbnailUrl = world.thumbnailImageUrl
-                })
+                world?.let {
+                    worldList.add(WorldCache(world.id).apply {
+                        name = world.name
+                        thumbnailUrl = world.thumbnailImageUrl
+                    })
+                }
             }
             friendList.add(friend)
         }
@@ -64,9 +71,6 @@ object CacheManager {
         }
 
         FriendManager.setFriends(friendList)
-
-        // val intent = Intent(context, FriendWidgetReceiver::class.java).apply { action = "FRIEND_LOCATION_UPDATE" }
-        // context.sendBroadcast(intent)
 
         App.setLoadingText(R.string.loading_text_recently_visited)
 
@@ -86,6 +90,12 @@ object CacheManager {
         listeners.forEach { listener ->
             listener?.endCacheRefresh()
         }
+
+        cacheRefreshing = false
+    }
+
+    fun isRefreshing(): Boolean {
+        return cacheRefreshing
     }
 
     fun isWorldCached(worldId: String): Boolean {
@@ -111,7 +121,7 @@ object CacheManager {
         }
     }
 
-    fun getProfile(): User {
+    fun getProfile(): User? {
         return profile
     }
 

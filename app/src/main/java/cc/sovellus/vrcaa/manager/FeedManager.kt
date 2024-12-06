@@ -1,16 +1,20 @@
 package cc.sovellus.vrcaa.manager
 
-import cc.sovellus.vrcaa.extension.milliseconds
 import cc.sovellus.vrcaa.helper.StatusHelper
 import java.time.LocalDateTime
 import java.util.UUID
-import kotlin.math.abs
 
 
 object FeedManager {
 
     private var feedListener: FeedListener? = null
     private var feedList: MutableList<Feed> = ArrayList()
+
+    init {
+        DatabaseManager.readFeeds().map {
+            feedList.add(it)
+        }
+    }
 
     enum class FeedType {
         FRIEND_FEED_ONLINE,
@@ -19,7 +23,11 @@ object FeedManager {
         FRIEND_FEED_STATUS,
         FRIEND_FEED_FRIEND_REQUEST,
         FRIEND_FEED_REMOVED,
-        FRIEND_FEED_ADDED
+        FRIEND_FEED_ADDED;
+
+        companion object {
+            fun fromInt(value: Int) = entries.first { it.ordinal == value }
+        }
     }
 
     data class Feed(
@@ -30,6 +38,7 @@ object FeedManager {
         var friendPictureUrl: String = "",
         var friendStatus: StatusHelper.Status = StatusHelper.Status.Offline,
         var travelDestination: String = "",
+        var worldId: String = "",
         var feedTimestamp: LocalDateTime = LocalDateTime.now()
     )
 
@@ -39,6 +48,7 @@ object FeedManager {
 
     fun addFeed(feed: Feed) {
         feedList.add(feed)
+        DatabaseManager.writeFeed(feed)
         feedListener?.onReceiveUpdate(feedList)
     }
 

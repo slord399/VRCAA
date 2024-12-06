@@ -1,22 +1,25 @@
 package cc.sovellus.vrcaa.ui.screen.home
 
-import android.content.Context
-import android.content.Intent
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.toMutableStateList
-import cafe.adriel.voyager.core.model.ScreenModel
+import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import cc.sovellus.vrcaa.api.vrchat.models.Friend
+import cc.sovellus.vrcaa.api.vrchat.models.User
 import cc.sovellus.vrcaa.manager.CacheManager
 import cc.sovellus.vrcaa.manager.CacheManager.WorldCache
-import cc.sovellus.vrcaa.api.vrchat.models.Friend
 import cc.sovellus.vrcaa.manager.FriendManager
-import cc.sovellus.vrcaa.widgets.FriendWidgetReceiver
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class HomeScreenModel : ScreenModel {
+sealed class HomeState {
+    data object Init : HomeState()
+    data object Loading : HomeState()
+    data object Result : HomeState()
+}
+
+class HomeScreenModel : StateScreenModel<HomeState>(HomeState.Init) {
 
     private var friendsListFlow = MutableStateFlow(mutableStateListOf<Friend>())
     var friendsList = friendsListFlow.asStateFlow()
@@ -30,27 +33,35 @@ class HomeScreenModel : ScreenModel {
         }
     }
 
-    val isUpdatingCache = mutableStateOf(false)
-
     private val cacheListener = object : CacheManager.CacheListener {
         override fun recentlyVisitedUpdated(worlds: MutableList<WorldCache>) {
             recentlyVisitedFlow.value = worlds.toMutableStateList()
         }
 
         override fun startCacheRefresh() {
-            isUpdatingCache.value = true
+            mutableState.value = HomeState.Loading
         }
 
         override fun endCacheRefresh() {
-            isUpdatingCache.value = false
             fetchContent()
+            mutableState.value = HomeState.Result
         }
+
+        override fun profileUpdated(profile: User) {}
     }
 
     init {
+        mutableState.value = HomeState.Loading
         FriendManager.addFriendListener(listener)
         CacheManager.addListener(cacheListener)
-        fetchContent()
+
+        // BUG: this will be "true" before the initial screen loads
+        // set "HomeState" to Loading with startCacheRefresh
+        // is used as an temporary mitigation
+        if (!CacheManager.isRefreshing()) {
+            fetchContent()
+            mutableState.value = HomeState.Result
+        }
     }
 
     private fun fetchContent() {

@@ -1,6 +1,5 @@
 package cc.sovellus.vrcaa.ui.screen.profile
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.defaultMinSize
@@ -15,14 +14,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.uniqueScreenKey
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.api.vrchat.models.User
 import cc.sovellus.vrcaa.helper.StatusHelper
@@ -44,8 +40,8 @@ class ProfileScreen : Screen {
         val state by model.state.collectAsState()
 
         when (val result = state) {
-            is ProfileState.Loading -> LoadingIndicatorScreen().Content()
-            is ProfileState.Result -> RenderProfile(result.profile)
+            is ProfileScreenModel.ProfileState.Loading -> LoadingIndicatorScreen().Content()
+            is ProfileScreenModel.ProfileState.Result -> RenderProfile(result.profile)
             else -> {}
         }
     }
@@ -61,7 +57,7 @@ class ProfileScreen : Screen {
                     profile.let {
                         ProfileCard(
                             thumbnailUrl = it.profilePicOverride.ifEmpty { it.currentAvatarImageUrl },
-                            iconUrl = it.userIcon.ifEmpty { it.currentAvatarImageUrl },
+                            iconUrl = it.userIcon.ifEmpty { it.profilePicOverride.ifEmpty { it.currentAvatarImageUrl } },
                             displayName = it.displayName,
                             statusDescription = it.statusDescription.ifEmpty {  StatusHelper.getStatusFromString(it.status).toString() },
                             trustRankColor = TrustHelper.getTrustRankFromTags(it.tags).toColor(),

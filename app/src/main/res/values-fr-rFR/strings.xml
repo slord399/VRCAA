@@ -31,6 +31,7 @@
     <string name="main_search_placeholder">Rechercher des mondes, utilisateurs ou avatars…</string>
     <!-- Profile -->
     <string name="profile_label_current_location">Emplacement actuel</string>
+    <string name="profile_label_note">Note</string>
     <string name="profile_label_biography">Bio</string>
     <string name="profile_text_no_biography">Aucune description spécifiée.</string>
     <string name="profile_user_dropdown_manage_notifications">Gérer les notifications</string>
@@ -39,8 +40,9 @@
     <string name="profile_user_dropdown_invite_self">S\'envoyer une invitation</string>
     <string name="profile_user_not_found_message">L\'utilisateur n\'existe pas.</string>
     <string name="profile_user_avatar_private">L\'avatar est privé !</string>
+    <string name="profile_user_avatar_unreachable">Avatar is unreachable!</string>
     <string name="profile_user_toast_invite_sent">Invitation envoyée ! Regardez VRChat.</string>
-    <string name="profile_mutual_groups_text">Mutual Groups</string>
+    <string name="profile_mutual_groups_text">Groupes mutuels</string>
     <!-- Search -->
     <string name="search_text_result">Résultats pour</string>
     <string name="search_filter_category_worlds">Mondes</string>
@@ -50,11 +52,11 @@
     <string name="search_filter_category_users">Utilisateurs</string>
     <string name="search_filter_category_users_count">Quantité</string>
     <string name="search_filter_category_avatars">Avatars</string>
-    <string name="search_filter_category_avatars_provider">Provider</string>
+    <string name="search_filter_category_avatars_provider">Fournisseurs</string>
     <string name="search_filter_category_groups">Groupes</string>
     <string name="search_filter_category_groups_count">Quantité</string>
     <!-- TODO: remove duplicate labels :) -->
-    <string name="search_filter_label_count">Count</string>
+    <string name="search_filter_label_count">Quantité</string>
     <string name="search_filter_button_reset">Réinitialiser</string>
     <string name="search_filter_button_apply">Appliquer</string>
     <string-array name="search_selection_options">
@@ -65,7 +67,13 @@
     </string-array>
     <!-- Settings -->
     <string name="settings_item_about">À propos</string>
+    <string name="settings_item_about_description">More information about your device and VRCAA</string>
+    <string name="settings_item_theming">Appearance</string>
+    <string name="settings_item_theming_description">Appearance configuration, minimalist mode</string>
     <string name="settings_item_rich_presence">Rich Presence (Expérimental)</string>
+    <string name="settings_item_rich_presence_description">Discord rich-presence integration</string>
+    <string name="settings_item_advanced_settings">Advanced</string>
+    <string name="settings_item_advanced_settings_description">Advanced logging and features</string>
     <string name="settings_item_logout">Se déconnecter</string>
     <!-- Worlds -->
     <string name="world_label_description">Description</string>
@@ -86,6 +94,8 @@
     <!-- Tabs -->
     <string name="tabs_label_friends">Amis</string>
     <string name="tabs_label_home">Domicile</string>
+    <string name="tabs_label_favorites">Favoris</string>
+    <string name="tabs_label_feed">Feed</string>
     <string name="tabs_label_activities">Activités</string>
     <string name="tabs_label_profile">Profil</string>
     <string name="tabs_label_pictures">Photos</string>
@@ -177,6 +187,7 @@
     <string name="group_page_label_description">Description</string>
     <string name="group_page_label_rules">Règles</string>
     <string name="group_page_dropdown_view_author">Voir le profil de l\'auteur</string>
+    <string name="group_page_dropdown_accept_invite">Accept Invite</string>
     <string name="group_page_dropdown_request_invite">Demander une invitation</string>
     <string name="group_page_dropdown_request_invite_cancel">Annuler l\'invitation</string>
     <string name="group_page_dropdown_join_group">Rejoindre le groupe</string>
@@ -213,10 +224,10 @@
     <string name="profile_edit_dialog_toast_cancelled">Les modifications ont été ignorées.</string>
     <string name="profile_edit_dialog_title_edit_profile">Modifier le profil</string>
     <!-- Logout dialog -->
-    <string name="logout_dialog_title">Are you sure?</string>
-    <string name="logout_dialog_description">By pressing \"Continue\" below you will log-out of VRCAA and you have to re-login to keep using the application.</string>
-    <string name="logout_dialog_continue">Continue</string>
-    <string name="logout_dialog_cancel">Cancel</string>
+    <string name="logout_dialog_title">Êtes-vous sûr ?</string>
+    <string name="logout_dialog_description">En appuyant sur \"Continuer\" ci-dessous, vous vous déconnecterez de VRCAA et vous devrez vous reconnecter pour continuer à utiliser l\'application.</string>
+    <string name="logout_dialog_continue">Continuer</string>
+    <string name="logout_dialog_cancel">Annuler</string>
     <!-- Widgets -->
     <string name="widget_name_friend_list">Voir les emplacements actuels des amis</string>
     <string name="widget_name_loading_text">L\'horizon est lumineux, mon ami.</string>
@@ -234,6 +245,12 @@
     <string name="favorite_dialog_button_cancel">Annuler</string>
     <string name="favorite_dialog_title">"Ajouter aux favoris"</string>
     <string name="favorite_page_title">Afficher les favoris</string>
+    <string name="favorite_edit_title">Modification de %1$s</string>
+    <string name="favorite_edit_display_name">Nom d’affichage</string>
+    <string name="favorite_edit_visibility">Visibilité</string>
+    <string name="favorite_edit_discarded">Les modifications ont été ignorées.</string>
+    <string name="favorite_edit_applied">Les modifications ont été appliquées.</string>
+    <string name="favorite_dialog_button_edit">Modifier</string>
     <!-- Activities -->
     <string-array name="activities_selection_options">
         <item>Flux</item>
@@ -245,20 +262,38 @@
     <!-- Avatars -->
     <string name="avatars_page_title">Afficher les avatars</string>
     <!-- Debug -->
-    <string name="developer_mode_toggle_toast">Restart the application to make the changes take effect.</string>
+    <string name="developer_mode_toggle_toast">Redémarrez l\'application pour que les modifications prennent effet.</string>
     <!-- Loading Texts -->
-    <string name="loading_text_profile">Loading profile…</string>
-    <string name="loading_text_online_friends">Loading online friends…</string>
-    <string name="loading_text_offline_friends">Loading offline friends…</string>
-    <string name="loading_text_recently_visited">Loading recently visited worlds…</string>
-    <string name="loading_text_favorites">Loading favorites…</string>
-    <string name="loading_text_worlds">Loading worlds…</string>
-    <string name="loading_text_users">Loading users…</string>
-    <string name="loading_text_avatars">Loading avatars…</string>
-    <string name="loading_text_groups">Loading groups…</string>
-    <string name="loading_text_user">Loading user…</string>
-    <string name="loading_text_world">Loading world…</string>
-    <string name="loading_text_avatar">Loading avatar…</string>
-    <string name="loading_text_group">Loading group…</string>
-    <string name="loading_text_instances">Loading instances…</string>
+    <string name="loading_text_profile">Chargement du profil…</string>
+    <string name="loading_text_online_friends">Chargement des amis en ligne…</string>
+    <string name="loading_text_offline_friends">Chargement des amis hors ligne…</string>
+    <string name="loading_text_recently_visited">Chargement des mondes récemment visités…</string>
+    <string name="loading_text_favorites">Chargement des favoris…</string>
+    <string name="loading_text_worlds">Chargement des mondes…</string>
+    <string name="loading_text_users">Chargement des utilisateurs…</string>
+    <string name="loading_text_avatars">Chargement des avatars…</string>
+    <string name="loading_text_groups">Chargement des groupes…</string>
+    <string name="loading_text_user">Chargement des utilisateurs…</string>
+    <string name="loading_text_world">Chargement du monde…</string>
+    <string name="loading_text_avatar">Chargement de l\'avatar…</string>
+    <string name="loading_text_group">Chargement du groupe…</string>
+    <string name="loading_text_instances">Chargement des instances…</string>
+    <!-- Theming -->
+    <string name="theme_page_title">Theme</string>
+    <string name="theme_page_minimalist_mode_text">Minimalist Mode</string>
+    <string name="theme_page_minimalist_mode_text_description">"Minimalist Mode helps content to fit on smaller screens."</string>
+    <string-array name="theme_page_selection_options">
+        <item>Light</item>
+        <item>Dark</item>
+        <item>System</item>
+    </string-array>
+    <string name="theme_page_section_theme_title">Theme</string>
+    <string name="theme_page_section_display_title">Display</string>
+    <!-- Advanced Settings -->
+    <string name="advanced_page_title">Advanced Settings</string>
+    <string name="advanced_page_network_logging">Network Logging</string>
+    <string name="advanced_page_network_logging_description">Intercept HTTP and WebSocket traffic</string>
+    <string name="advanced_page_view_network_logs">Show Network Logs</string>
+    <string name="advanced_page_battery_optimization">Disable Battery Optimizations</string>
+    <string name="advanced_page_battery_optimization_description">May help with not receiving real-time network events</string>
 </resources>
