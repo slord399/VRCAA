@@ -170,7 +170,7 @@
     <string name="discord_login_label_enable">リッチプレゼンスを有効にする</string>
     <string name="discord_login_label_set_webhook">Webhook URLを設定する</string>
     <string name="discord_login_description_set_webhook">ワールドのサムネイル表示に必要 (任意)</string>
-    <string name="discord_login_description_enable">discordに現在のStatusを表示する</string>
+    <string name="discord_login_description_enable">Discordに現在のStatusを表示する</string>
     <string name="discord_login_label_logout">ログアウト</string>
     <string name="discord_login_description_logout">現在のセッショントークンを無効化します</string>
     <!-- Crash -->
