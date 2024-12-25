@@ -9,9 +9,9 @@ data class FriendLocation(
     @SerializedName("canRequestInvite")
     val canRequestInvite: Boolean,
     @SerializedName("location")
-    val location: String?,
+    val location: String,
     @SerializedName("travelingToLocation")
-    val travelingToLocation: String?,
+    val travelingToLocation: String,
     @SerializedName("user")
     val user: Friend,
     @SerializedName("userId")
@@ -19,5 +19,7 @@ data class FriendLocation(
     @SerializedName("world")
     val world: World?,
     @SerializedName("worldId")
-    val worldId: String
+    val worldId: String,
+    @SerializedName("platform")
+    var platform: String = ""
 )

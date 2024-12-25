@@ -15,6 +15,7 @@ import androidx.core.app.NotificationCompat
 import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.api.discord.DiscordGateway
 import cc.sovellus.vrcaa.api.vrchat.pipeline.PipelineSocket
+import cc.sovellus.vrcaa.api.vrchat.pipeline.models.FriendActive
 import cc.sovellus.vrcaa.api.vrchat.pipeline.models.FriendAdd
 import cc.sovellus.vrcaa.api.vrchat.pipeline.models.FriendDelete
 import cc.sovellus.vrcaa.api.vrchat.pipeline.models.FriendLocation
@@ -105,6 +106,8 @@ class PipelineService : Service(), CoroutineScope {
                     FeedManager.addFeed(feed)
 
                     FriendManager.updateFriend(update.user)
+                    FriendManager.updatePlatform(update.userId, update.platform)
+                    FriendManager.updateLocation(update.userId, update.location)
                 }
 
                 is FriendOffline -> {
@@ -137,6 +140,7 @@ class PipelineService : Service(), CoroutineScope {
 
                         FriendManager.updateLocation(friend.id, "offline")
                         FriendManager.updateStatus(friend.id, "offline")
+                        FriendManager.updatePlatform(friend.id, update.platform)
                     }
                 }
 
@@ -153,7 +157,7 @@ class PipelineService : Service(), CoroutineScope {
 
                     // if "friend.travelingToLocation" is not empty, it means friend is currently travelling.
                     // We want to show it only once, so only show when the travelling is done.
-                    if (update.travelingToLocation?.isEmpty() == true && update.location != null && update.world != null && friend?.location != update.location)
+                    if (update.travelingToLocation.isEmpty() && update.world != null && friend?.location != update.location)
                     {
                         if (NotificationHelper.isOnWhitelist(update.userId) &&
                             NotificationHelper.isIntentEnabled(
@@ -181,6 +185,8 @@ class PipelineService : Service(), CoroutineScope {
                     }
 
                     FriendManager.updateFriend(update.user)
+                    FriendManager.updatePlatform(update.userId, update.platform)
+                    FriendManager.updateLocation(update.userId, update.location)
                 }
 
                 is FriendUpdate -> {
@@ -297,6 +303,35 @@ class PipelineService : Service(), CoroutineScope {
 
                     FeedManager.addFeed(feed)
                     FriendManager.addFriend(update.user)
+                }
+
+                is FriendActive -> {
+                    val update = msg.obj as FriendActive
+
+                    val feed = FeedManager.Feed(FeedManager.FeedType.FRIEND_FEED_ONLINE).apply {
+                        friendId = update.userId
+                        friendName = update.user.displayName
+                        friendPictureUrl = update.user.userIcon.ifEmpty { update.user.currentAvatarImageUrl }
+                    }
+
+                    if (NotificationHelper.isOnWhitelist(update.userId) &&
+                        NotificationHelper.isIntentEnabled(
+                            update.userId,
+                            NotificationHelper.Intents.FRIEND_FLAG_ONLINE
+                        )
+                    ) {
+                        NotificationHelper.pushNotification(
+                            title = application.getString(R.string.notification_service_title_online),
+                            content = application.getString(R.string.notification_service_description_online)
+                                .format(update.user.displayName),
+                            channel = NotificationHelper.CHANNEL_ONLINE_ID
+                        )
+                    }
+
+                    FeedManager.addFeed(feed)
+
+                    FriendManager.updateFriend(update.user)
+                    FriendManager.updatePlatform(update.userId, update.platform)
                 }
 
                 is Notification -> {
