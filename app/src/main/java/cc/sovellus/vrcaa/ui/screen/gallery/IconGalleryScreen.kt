@@ -64,19 +64,19 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 
-class GalleryScreen : Screen {
+class IconGalleryScreen : Screen {
 
     override val key = uniqueScreenKey
 
     @Composable
     override fun Content() {
-        val model = rememberScreenModel { GalleryScreenModel() }
+        val model = rememberScreenModel { IconGalleryScreenModel() }
         val state by model.state.collectAsState()
 
         when (val result = state) {
-            is GalleryScreenModel.GalleryState.Loading -> LoadingIndicatorScreen().Content()
-            is GalleryScreenModel.GalleryState.Empty -> HandleEmpty()
-            is GalleryScreenModel.GalleryState.Result -> DisplayResult(result.files, model)
+            is IconGalleryScreenModel.IconGalleryState.Loading -> LoadingIndicatorScreen().Content()
+            is IconGalleryScreenModel.IconGalleryState.Empty -> HandleEmpty()
+            is IconGalleryScreenModel.IconGalleryState.Result -> DisplayResult(result.files, model)
             else -> {}
         }
     }
@@ -98,7 +98,7 @@ class GalleryScreen : Screen {
                         }
                     },
                     title = {
-                        Text(text = "Gallery")
+                        Text(text = "User Icons")
                     }
                 )
             },
@@ -121,7 +121,7 @@ class GalleryScreen : Screen {
 
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
     @Composable
-    private fun DisplayResult(files: ArrayList<File>, model: GalleryScreenModel) {
+    private fun DisplayResult(files: ArrayList<File>, model: IconGalleryScreenModel) {
         val navigator = LocalNavigator.currentOrThrow
 
         var previewFile by remember { mutableStateOf<File.Version.File?>(null) }
@@ -139,7 +139,7 @@ class GalleryScreen : Screen {
                         }
                     },
                     title = {
-                        Text(text = "Gallery") // stringResource(R.string.avatars_page_title)
+                        Text(text = "User Icons") // stringResource(R.string.avatars_page_title)
                     }
                 )
             },
@@ -157,7 +157,7 @@ class GalleryScreen : Screen {
                 ) {
                     LazyVerticalGrid(
                         columns = when (model.preferences.columnCountOption) {
-                            0 -> GridCells.Adaptive(180.dp)
+                            0 -> GridCells.Adaptive(192.dp)
                             else -> GridCells.Fixed(model.preferences.fixedColumnSize)
                         },
                         contentPadding = PaddingValues(
@@ -175,8 +175,8 @@ class GalleryScreen : Screen {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(4.dp)
-                                        .height(140.dp)
-                                        .width(200.dp)
+                                        .height(192.dp)
+                                        .width(192.dp)
                                         .clip(RoundedCornerShape(10))
                                         .clickable(onClick = {
                                             previewFile = file.versions.last().file
