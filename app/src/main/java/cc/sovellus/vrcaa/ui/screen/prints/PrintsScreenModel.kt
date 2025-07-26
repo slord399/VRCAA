@@ -19,12 +19,15 @@ package cc.sovellus.vrcaa.ui.screen.prints
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import android.net.Uri
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import cc.sovellus.vrcaa.App
+import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.api.vrchat.http.models.Print
 import cc.sovellus.vrcaa.manager.ApiManager.api
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 
 class PrintsScreenModel(
     private val userId: String
@@ -44,11 +47,12 @@ class PrintsScreenModel(
     private var prints: ArrayList<Print> = arrayListOf()
 
     init {
-        mutableState.value = PrintsState.Loading
-        fetchAvatars()
+        fetchPrints()
     }
 
-    private fun fetchAvatars() {
+    private fun fetchPrints() {
+        mutableState.value = PrintsState.Loading
+        App.setLoadingText(R.string.loading_text_prints)
         screenModelScope.launch {
             prints = api.prints.fetchPrintsByUserId(userId)
 
@@ -56,6 +60,16 @@ class PrintsScreenModel(
                 mutableState.value = PrintsState.Empty
             else
                 mutableState.value = PrintsState.Result(prints)
+        }
+    }
+
+    fun uploadFile(uri: Uri?) {
+        uri?.let {
+            screenModelScope.launch {
+                api.prints.uploadPrint(uri, "", LocalDateTime.now())?.let {
+                    fetchPrints()
+                }
+            }
         }
     }
 }

@@ -46,7 +46,6 @@ import cc.sovellus.vrcaa.service.PipelineService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.collections.MutableList
 
 
 class NavigationScreenModel : ScreenModel {
@@ -82,7 +81,7 @@ class NavigationScreenModel : ScreenModel {
     private var filteredFeedStateFlow = MutableStateFlow(mutableStateListOf<FeedManager.Feed>())
     var filteredFeed = filteredFeedStateFlow.asStateFlow()
 
-    private val listener = object : HttpClient.SessionListener {
+    private val apiListener = object : HttpClient.SessionListener {
         override fun onSessionInvalidate() {
             if (!invalidSession.value) {
                 invalidSession.value = true
@@ -108,8 +107,15 @@ class NavigationScreenModel : ScreenModel {
         }
     }
 
+    private val cacheListener = object : CacheManager.CacheListener {
+        override fun endCacheRefresh() {
+            getCurrentProfileValues()
+        }
+    }
+
     init {
-        api.setSessionListener(listener)
+        api.setSessionListener(apiListener)
+        CacheManager.addListener(cacheListener)
     }
 
     fun addSearchHistory() {
@@ -141,15 +147,9 @@ class NavigationScreenModel : ScreenModel {
         preferences.avatarProvider = "avtrdb"
         preferences.groupsAmount = 50
         groupsAmount.intValue = 50
-
-        Toast.makeText(
-            context,
-            "Reset settings.",
-            Toast.LENGTH_SHORT
-        ).show()
     }
 
-    fun applySettings(silent: Boolean = false) {
+    fun applySettings() {
         preferences.searchFeaturedWorlds = featuredWorlds.value
         preferences.sortWorlds = sortWorlds.value
         preferences.worldsAmount = worldsAmount.intValue
@@ -157,14 +157,6 @@ class NavigationScreenModel : ScreenModel {
         preferences.groupsAmount = groupsAmount.intValue
         preferences.avatarsAmount = avatarsAmount.intValue
         preferences.avatarProvider = avatarProvider.value
-
-        if (!silent) {
-            Toast.makeText(
-                context,
-                "Applied settings.",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
     }
 
     fun getCurrentProfileValues() {
@@ -186,7 +178,7 @@ class NavigationScreenModel : ScreenModel {
 
     fun filterFeed() {
         val filteredFeed = FeedManager.getFeed().filter { feed ->
-            feed.friendName.contains(feedFilterQuery.value, ignoreCase = true) || (feed.travelDestination.contains(feedFilterQuery.value, ignoreCase = true) && feed.type == FeedManager.FeedType.FRIEND_FEED_LOCATION)
+            feed.friendName.contains(feedFilterQuery.value, ignoreCase = true) || (feed.travelDestination.contains(feedFilterQuery.value, ignoreCase = true) && feed.type == FeedManager.FeedType.FRIEND_FEED_LOCATION) || (feed.avatarName.contains(feedFilterQuery.value, ignoreCase = true) && feed.type == FeedManager.FeedType.FRIEND_FEED_AVATAR)
         }
 
         filteredFeedStateFlow.value = filteredFeed.toMutableStateList()

@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -84,7 +85,7 @@ class AdvancedScreen : Screen {
                         ListItem(
                             headlineContent = {
                                 Text(
-                                    text = "Networking",
+                                    text = stringResource(R.string.advanced_page_section_networking),
                                     color = MaterialTheme.colorScheme.secondary,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -134,7 +135,7 @@ class AdvancedScreen : Screen {
                         ListItem(
                             headlineContent = {
                                 Text(
-                                    text = "Background Activities",
+                                    text = stringResource(R.string.advanced_page_section_background_activities),
                                     color = MaterialTheme.colorScheme.secondary,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -148,13 +149,37 @@ class AdvancedScreen : Screen {
                             supportingContent = { Text(text = stringResource(R.string.advanced_page_battery_optimization_description)) },
                             modifier = Modifier.clickable(onClick = { model.disableBatteryOptimizations() })
                         )
-                    }
 
-                    item {
                         ListItem(
                             headlineContent = { Text(stringResource(R.string.advanced_page_kill_service)) },
                             supportingContent = { Text(stringResource(R.string.advanced_page_kill_service_description)) },
                             modifier = Modifier.clickable(onClick = { model.killBackgroundService() })
+                        )
+
+                        Spacer(modifier = Modifier.padding(4.dp))
+                    }
+
+                    item {
+                        ListItem(
+                            headlineContent = {
+                                Text(
+                                    text = stringResource(R.string.advanced_page_section_database),
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        )
+                    }
+
+                    item {
+                        ListItem(
+                            headlineContent = { Text(stringResource(R.string.advanced_page_database_delete)) },
+                            supportingContent = { Text(stringResource(R.string.advanced_page_database_delete_description)) },
+                            modifier = Modifier.clickable(
+                                onClick = {
+                                    model.deleteDatabase()
+                                }
+                            )
                         )
                     }
                 }

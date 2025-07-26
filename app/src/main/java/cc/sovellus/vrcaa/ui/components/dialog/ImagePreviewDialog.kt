@@ -16,6 +16,7 @@
 
 package cc.sovellus.vrcaa.ui.components.dialog
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -24,7 +25,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
@@ -42,8 +42,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import cc.sovellus.vrcaa.App
+import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.ui.components.misc.ZoomableImage
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
@@ -84,9 +88,10 @@ private fun saveGlideImageToPickedUri(imageUrl: String, pickedUri: Uri) {
     }
 }
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ImageZoomDialog(
+fun ImagePreviewDialog(
     name: String,
     url: String,
     onDismiss: () -> Unit
@@ -101,10 +106,17 @@ fun ImageZoomDialog(
         }
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
+    ) {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(0.dp),
             containerColor = Color.Transparent,
+            contentWindowInsets = WindowInsets(0),
             topBar = {
                 TopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors().copy(containerColor = Color.Transparent),
@@ -128,17 +140,17 @@ fun ImageZoomDialog(
                         }
                     },
                     title = {
-                        Text(text = "Preview")
+                        Text(text = stringResource(R.string.image_preview_dialog_title))
                     }
                 )
             }
-        ) { padding ->
+        ) { _ ->
             Box(
-                modifier = Modifier.padding(padding)
+                modifier = Modifier.fillMaxSize()
             ) {
                 ZoomableImage(
                     imageUrl = url,
-                    modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets(0))
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }

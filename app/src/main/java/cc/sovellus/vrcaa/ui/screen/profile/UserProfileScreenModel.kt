@@ -47,12 +47,12 @@ class UserProfileScreenModel(
 
     init {
         mutableState.value = UserProfileState.Loading
+        App.setLoadingText(R.string.loading_text_user)
         fetchProfile()
     }
 
     private fun fetchProfile() {
         screenModelScope.launch {
-            App.setLoadingText(R.string.loading_text_user)
             api.users.fetchUserByUserId(userId)?.let {
                 it.location.let { location ->
                     if (it.isFriend &&
@@ -81,33 +81,32 @@ class UserProfileScreenModel(
 
                         val name = metadata.name.split(" - ")
 
-                        val (_, nameAvatars) = avatarProvider.search(name[1])
-                        if (nameAvatars.isNotEmpty()) {
-                            for (avatar in nameAvatars) {
-                                avatar.imageUrl?.let {
+                        if (name.size > 1) {
+                            val (_, nameAvatars) = avatarProvider.search(name[1])
+                            if (nameAvatars.isNotEmpty()) {
+                                for (avatar in nameAvatars) {
                                     val avatarFileId = ApiHelper.extractFileIdFromUrl(avatar.imageUrl)
                                     if (avatarFileId == fileId) {
-                                        callback(avatar.id)
+                                        callback(avatar.vrcId)
                                         return@launch
                                     }
                                 }
                             }
-                        }
 
-                        // fallback to using author search
-                        val (_, authorAvatars) = avatarProvider.search(metadata.ownerId)
-                        if (authorAvatars.isNotEmpty()) {
-                            for (avatar in authorAvatars) {
-                                avatar.imageUrl?.let {
+                            // fallback to using author search
+                            val (_, authorAvatars) = avatarProvider.search(metadata.ownerId)
+                            if (authorAvatars.isNotEmpty()) {
+                                for (avatar in authorAvatars) {
                                     val avatarFileId = ApiHelper.extractFileIdFromUrl(avatar.imageUrl)
                                     if (avatarFileId == fileId) {
-                                        callback(avatar.id)
+                                        callback(avatar.vrcId)
                                         return@launch
                                     }
                                 }
                             }
+
+                            callback(null)
                         }
-                        callback(null)
                     }
                 }
             }

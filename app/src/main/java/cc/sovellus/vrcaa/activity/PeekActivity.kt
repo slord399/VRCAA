@@ -28,7 +28,7 @@ import cc.sovellus.vrcaa.base.BaseActivity
 import cc.sovellus.vrcaa.ui.screen.avatar.AvatarScreen
 import cc.sovellus.vrcaa.ui.screen.group.GroupScreen
 import cc.sovellus.vrcaa.ui.screen.profile.UserProfileScreen
-import cc.sovellus.vrcaa.ui.screen.world.WorldInfoScreen
+import cc.sovellus.vrcaa.ui.screen.world.WorldScreen
 
 class PeekActivity : BaseActivity() {
 
@@ -44,8 +44,15 @@ class PeekActivity : BaseActivity() {
 
         val data = path?.split("/")
 
-        type = data?.get(0) ?: "unknown"
-        id = data?.get(1) ?: ""
+        data?.let {
+            if (it.size >= 2) {
+                type = data[0]
+                id = data[1]
+            } else {
+                type = "unknown"
+                id = "0"
+            }
+        }
     }
 
     @Composable
@@ -54,7 +61,7 @@ class PeekActivity : BaseActivity() {
 
         when (type) {
             "world" -> {
-                screen = WorldInfoScreen(id, true)
+                screen = WorldScreen(id, true)
             }
             "user" -> {
                 screen = UserProfileScreen(id, true)

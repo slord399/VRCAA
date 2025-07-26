@@ -62,7 +62,8 @@ fun ProfileCard(
     statusColor: Color,
     tags: List<String>,
     badges: List<Badge>,
-    pronouns: String
+    pronouns: String,
+    ageVerificationStatus: String
 ) {
     ElevatedCard(
         elevation = CardDefaults.cardElevation(
@@ -132,6 +133,23 @@ fun ProfileCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        if (ageVerificationStatus == "18+") {
+                            Badge(
+                                containerColor = Color(0xFF606FE4),
+                                modifier = Modifier.padding(start = 8.dp)
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(2.dp),
+                                    text = "18+",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Left,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = Color.White
+                                )
+                            }
+                        }
                         if (pronouns.isNotEmpty()) {
                             Badge(
                                 containerColor = MaterialTheme.colorScheme.secondary,

@@ -41,8 +41,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -51,6 +53,7 @@ import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.Backpack
 import androidx.compose.material.icons.filled.Cabin
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EmojiEmotions
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.History
@@ -98,6 +101,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -129,12 +133,15 @@ import cc.sovellus.vrcaa.ui.components.card.QuickMenuCard
 import cc.sovellus.vrcaa.ui.components.dialog.NoInternetDialog
 import cc.sovellus.vrcaa.ui.components.input.ComboInput
 import cc.sovellus.vrcaa.ui.screen.avatars.AvatarsScreen
+import cc.sovellus.vrcaa.ui.screen.emojis.EmojisScreen
 import cc.sovellus.vrcaa.ui.screen.feed.FeedList
 import cc.sovellus.vrcaa.ui.screen.gallery.GalleryScreen
 import cc.sovellus.vrcaa.ui.screen.gallery.IconGalleryScreen
 import cc.sovellus.vrcaa.ui.screen.group.UserGroupsScreen
+import cc.sovellus.vrcaa.ui.screen.items.ItemsScreen
 import cc.sovellus.vrcaa.ui.screen.prints.PrintsScreen
 import cc.sovellus.vrcaa.ui.screen.search.SearchResultScreen
+import cc.sovellus.vrcaa.ui.screen.stickers.StickersScreen
 import cc.sovellus.vrcaa.ui.screen.worlds.WorldsScreen
 import cc.sovellus.vrcaa.ui.tabs.FavoritesTab
 import cc.sovellus.vrcaa.ui.tabs.FeedTab
@@ -355,31 +362,7 @@ class NavigationScreen : Screen {
                         }
 
                         ProfileTab.options.index -> {
-                            TopAppBar(actions = {
-                                IconButton(onClick = { isMenuExpanded = true }) {
-                                    Icon(
-                                        imageVector = Icons.Filled.MoreVert,
-                                        contentDescription = null
-                                    )
-                                    Box(
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        DropdownMenu(
-                                            expanded = isMenuExpanded,
-                                            onDismissRequest = { isMenuExpanded = false },
-                                            offset = DpOffset(0.dp, 0.dp)
-                                        ) {
-                                            DropdownMenuItem(
-                                                onClick = {
-                                                    model.getCurrentProfileValues()
-                                                    showProfileSheet = true
-                                                    isMenuExpanded = false
-                                                },
-                                                text = { Text(stringResource(R.string.profile_edit_dialog_title_edit_profile)) })
-                                        }
-                                    }
-                                }
-                            },
+                            TopAppBar(
                                 title = {
                                     Text(
                                         text = stringResource(id = R.string.tabs_label_profile),
@@ -525,25 +508,15 @@ class NavigationScreen : Screen {
                         ModalBottomSheet(
                             onDismissRequest = {
                                 showProfileSheet = false
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.profile_edit_dialog_toast_cancelled),
-                                    Toast.LENGTH_LONG
-                                ).show()
                             }, sheetState = profileSheetState
                         ) {
                             LazyColumn {
                                 item {
                                     ListItem(leadingContent = {
                                         OutlinedButton(onClick = {
-                                            Toast.makeText(
-                                                context,
-                                                context.getString(R.string.profile_edit_dialog_toast_cancelled),
-                                                Toast.LENGTH_LONG
-                                            ).show()
                                             showProfileSheet = false
                                         }) {
-                                            Text("Cancel")
+                                            Text(stringResource(R.string.profile_edit_dialog_button_cancel))
                                         }
                                     }, trailingContent = {
                                         Button(onClick = {
@@ -577,7 +550,7 @@ class NavigationScreen : Screen {
                                                 }
                                             }
                                         }) {
-                                            Text("Change")
+                                            Text(stringResource(R.string.profile_edit_dialog_button_apply))
                                         }
                                     }, headlineContent = { })
                                 }
@@ -776,7 +749,6 @@ class NavigationScreen : Screen {
                         ModalBottomSheet(
                             onDismissRequest = {
                                 showSettingsSheet = false
-                                model.applySettings(true)
                             }, sheetState = settingsSheetState
                         ) {
                             LazyColumn {
@@ -888,7 +860,8 @@ class NavigationScreen : Screen {
                                                 value = model.usersAmount.intValue.toString(),
                                                 onValueChange = {
                                                     if (it.isNotEmpty()) model.usersAmount.intValue =
-                                                        it.toInt()
+                                                        it.toIntOrNull()
+                                                            ?: model.usersAmount.intValue
                                                 },
                                                 singleLine = true,
                                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -1039,90 +1012,123 @@ class NavigationScreen : Screen {
                             .zIndex(1f),
                         shadowElevation = 8.dp
                     ) {
-                        Column {
-                            CacheManager.getProfile()?.let {
-                                QuickMenuCard(
-                                    thumbnailUrl = it.profilePicOverride.ifEmpty { it.currentAvatarImageUrl },
-                                    iconUrl = it.userIcon.ifEmpty { it.profilePicOverride.ifEmpty { it.currentAvatarImageUrl } },
-                                    displayName = it.displayName,
-                                    statusDescription = it.statusDescription.ifEmpty {  StatusHelper.getStatusFromString(it.status).toString() },
-                                    trustRankColor = TrustHelper.getTrustRankFromTags(it.tags).toColor(),
-                                    statusColor = StatusHelper.getStatusFromString(it.status).toColor(),
-                                    tags = it.tags,
-                                    badges = it.badges
-                                )
+                        LazyColumn {
+                            item {
+                                CacheManager.getProfile()?.let {
+                                    Box(modifier = Modifier.fillMaxWidth()) {
+                                        QuickMenuCard(
+                                            thumbnailUrl = it.profilePicOverride.ifEmpty { it.currentAvatarImageUrl },
+                                            iconUrl = it.userIcon.ifEmpty { it.profilePicOverride.ifEmpty { it.currentAvatarImageUrl } },
+                                            displayName = it.displayName,
+                                            statusDescription = it.statusDescription.ifEmpty {  StatusHelper.getStatusFromString(it.status).toString() },
+                                            trustRankColor = TrustHelper.getTrustRankFromTags(it.tags).toColor(),
+                                            statusColor = StatusHelper.getStatusFromString(it.status).toColor(),
+                                            tags = it.tags,
+                                            badges = it.badges
+                                        )
+
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .padding(4.dp)
+                                                .background(Color.Black.copy(alpha = 0.6f), shape = CircleShape)
+                                        ) {
+                                            IconButton(
+                                                onClick = {
+                                                    isQuickMenuExpanded = false
+                                                    showProfileSheet = true
+                                                },
+                                                modifier = Modifier.size(36.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Edit,
+                                                    contentDescription = null,
+                                                    tint = Color.White
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
 
-                            Column(modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 16.dp, bottom = 16.dp)) {
+                            item {
+                                Column(modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 16.dp, bottom = 16.dp)) {
 
-                                val options = listOf<String>("Gallery", "User Icons", "Worlds", "Avatars", "Groups", "Emojis", "Stickers", "Prints", "Items")
-                                val icons = listOf(Icons.Default.PhotoLibrary, Icons.Default.Photo, Icons.Default.Cabin, Icons.Filled.Person, Icons.Default.Group, Icons.Default.EmojiEmotions, Icons.AutoMirrored.Filled.StickyNote2, Icons.Default.Print, Icons.Default.Backpack)
+                                    val options = stringArrayResource(R.array.inventory_selection_options)
+                                    val icons = listOf(Icons.Default.PhotoLibrary, Icons.Default.Photo, Icons.Default.Cabin, Icons.Filled.Person, Icons.Default.Group, Icons.Default.EmojiEmotions, Icons.AutoMirrored.Filled.StickyNote2, Icons.Default.Print, Icons.Default.Backpack)
 
-                                options.forEachIndexed { index, label ->
+                                    options.forEachIndexed { index, label ->
 
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 4.dp, horizontal = 4.dp)
-                                            .clip(RoundedCornerShape(80))
-                                            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f))
-                                            .clickable(onClick = {
-                                                when (index) {
-                                                    0 -> {
-                                                        CacheManager.getProfile()?.let {
-                                                            navigator.push(GalleryScreen())
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 4.dp, horizontal = 4.dp)
+                                                .clip(RoundedCornerShape(80))
+                                                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f))
+                                                .clickable(onClick = {
+                                                    when (index) {
+                                                        0 -> {
+                                                            CacheManager.getProfile()?.let {
+                                                                navigator.push(GalleryScreen())
+                                                            }
+                                                        }
+                                                        1 -> {
+                                                            CacheManager.getProfile()?.let {
+                                                                navigator.push(IconGalleryScreen())
+                                                            }
+                                                        }
+                                                        2 -> {
+                                                            CacheManager.getProfile()?.let {
+                                                                navigator.push(WorldsScreen(it.displayName, it.id, true))
+                                                            }
+                                                        }
+                                                        3 -> {
+                                                            CacheManager.getProfile()?.let {
+                                                                navigator.push(AvatarsScreen())
+                                                            }
+                                                        }
+                                                        4 -> {
+                                                            CacheManager.getProfile()?.let {
+                                                                navigator.push(UserGroupsScreen(it.displayName, it.id))
+                                                            }
+                                                        }
+                                                        5 -> {
+                                                            CacheManager.getProfile()?.let {
+                                                                navigator.push(EmojisScreen())
+                                                            }
+                                                        }
+                                                        6 -> {
+                                                            CacheManager.getProfile()?.let {
+                                                                navigator.push(StickersScreen())
+                                                            }
+                                                        }
+                                                        7 -> {
+                                                            CacheManager.getProfile()?.let {
+                                                                navigator.push(PrintsScreen(it.id))
+                                                            }
+                                                        }
+                                                        8 -> {
+                                                            CacheManager.getProfile()?.let {
+                                                                navigator.push(ItemsScreen())
+                                                            }
                                                         }
                                                     }
-                                                    1 -> {
-                                                        CacheManager.getProfile()?.let {
-                                                            navigator.push(IconGalleryScreen())
-                                                        }
-                                                    }
-                                                    2 -> {
-                                                        CacheManager.getProfile()?.let {
-                                                            navigator.push(WorldsScreen(it.displayName, it.id, true))
-                                                        }
-                                                    }
-                                                    3 -> {
-                                                        CacheManager.getProfile()?.let {
-                                                            navigator.push(AvatarsScreen())
-                                                        }
-                                                    }
-                                                    4 -> {
-                                                        CacheManager.getProfile()?.let {
-                                                            navigator.push(UserGroupsScreen(it.displayName, it.id))
-                                                        }
-                                                    }
-                                                    5 -> {
+                                                    isQuickMenuExpanded = false
+                                                }).padding(vertical = 16.dp, horizontal = 16.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = icons[index],
+                                                contentDescription = null
+                                            )
 
-                                                    }
-                                                    6 -> {
-
-                                                    }
-                                                    7 -> {
-                                                        CacheManager.getProfile()?.let {
-                                                            navigator.push(PrintsScreen(it.id))
-                                                        }
-                                                    }
-                                                    8 -> {
-
-                                                    }
-                                                }
-                                                isQuickMenuExpanded = false
-                                            }).padding(vertical = 16.dp, horizontal = 16.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = icons[index],
-                                            contentDescription = null
-                                        )
-
-                                        Text(
-                                            text = label,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.padding(start = 4.dp)
-                                        )
+                                            Text(
+                                                text = label,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.padding(start = 4.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }

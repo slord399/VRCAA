@@ -63,7 +63,7 @@ import java.util.concurrent.TimeUnit
 
 class PipelineService : Service(), CoroutineScope {
 
-    override val coroutineContext = Dispatchers.Main + SupervisorJob()
+    override val coroutineContext = Dispatchers.IO + SupervisorJob()
 
     private lateinit var preferences: SharedPreferences
 
@@ -277,17 +277,18 @@ class PipelineService : Service(), CoroutineScope {
 
                     if (user.location.contains("wrld_")) {
                         launch {
-                            val location = LocationHelper.parseLocationInfo(user.location)
+                            val location = LocationHelper.parseLocationInfo(user.travelingToLocation)
                             val instance = api.instances.fetchInstance(user.location)
                             instance?.let {
-                                if (CacheManager.isWorldCached(it.id))
+                                if (CacheManager.isWorldCached(it.id)) {
                                     CacheManager.updateWorld(instance.world)
-                                else
+                                } else {
                                     CacheManager.addWorld(instance.world)
-                                CacheManager.addRecent(instance.world)
+                                }
                                 if (preferences.richPresenceEnabled) {
                                     GatewayManager.updateWorld(instance.world.name, "${location.instanceType} #${instance.name} (${instance.nUsers} of ${instance.capacity})", instance.world.imageUrl, user.user.status, instance.worldId)
                                 }
+                                CacheManager.addRecentWorld(instance.world)
                             }
                         }
                     }
@@ -386,22 +387,20 @@ class PipelineService : Service(), CoroutineScope {
                     val notification = msg.obj as Notification
 
                     launch {
-                        withContext(Dispatchers.Main) {
-                            val sender = api.users.fetchUserByUserId(notification.senderUserId)
+                        val sender = api.users.fetchUserByUserId(notification.senderUserId)
 
-                            when (notification.type) {
-                                "friendRequest" -> {
-                                    val feed = FeedManager.Feed(FeedManager.FeedType.FRIEND_FEED_FRIEND_REQUEST).apply {
-                                        friendId = notification.senderUserId
-                                        friendName = notification.senderUsername
-                                        friendPictureUrl = sender?.let { it.profilePicOverride.ifEmpty { it.currentAvatarImageUrl } }.toString()
-                                    }
-
-                                    FeedManager.addFeed(feed)
+                        when (notification.type) {
+                            "friendRequest" -> {
+                                val feed = FeedManager.Feed(FeedManager.FeedType.FRIEND_FEED_FRIEND_REQUEST).apply {
+                                    friendId = notification.senderUserId
+                                    friendName = notification.senderUsername
+                                    friendPictureUrl = sender?.let { it.profilePicOverride.ifEmpty { it.currentAvatarImageUrl } }.toString()
                                 }
 
-                                else -> {}
+                                FeedManager.addFeed(feed)
                             }
+
+                            else -> {}
                         }
                     }
                 }
@@ -415,16 +414,6 @@ class PipelineService : Service(), CoroutineScope {
 
         this.preferences = getSharedPreferences(App.PREFERENCES_NAME, 0)
 
-        launch {
-            api.auth.fetchToken()?.let { token ->
-                pipeline = PipelineSocket(token)
-                pipeline?.let { pipeline ->
-                    pipeline.setListener(listener)
-                    pipeline.connect()
-                }
-            }
-        }
-
         HandlerThread("VRCAA_BackgroundWorker", THREAD_PRIORITY_FOREGROUND).apply {
             start()
 
@@ -434,31 +423,50 @@ class PipelineService : Service(), CoroutineScope {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        try {
+            val builder = NotificationCompat.Builder(this, NotificationHelper.CHANNEL_DEFAULT_ID)
+                .setSmallIcon(R.drawable.ic_notification_icon)
+                .setContentTitle(application.getString(R.string.app_name))
+                .setContentText(application.getString(R.string.service_notification))
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
 
-        val builder = NotificationCompat.Builder(this, NotificationHelper.CHANNEL_DEFAULT_ID)
-            .setSmallIcon(R.drawable.ic_notification_icon)
-            .setContentTitle(application.getString(R.string.app_name))
-            .setContentText(application.getString(R.string.service_notification))
-            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    builder.build(),
+                    FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                )
+            } else {
+                // Older versions do not require to specify the `foregroundServiceType`
+                startForeground(NOTIFICATION_ID, builder.build())
+            }
 
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(
-                NOTIFICATION_ID,
-                builder.build(),
-                FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            launch {
+                api.auth.fetchToken()?.let { token ->
+                    pipeline = PipelineSocket(token)
+                    pipeline?.let { pipeline ->
+                        pipeline.setListener(listener)
+                        pipeline.connect()
+                    }
+                }
+            }
+
+            scheduler.scheduleWithFixedDelay(refreshTask, INITIAL_INTERVAL, RESTART_INTERVAL, TimeUnit.MILLISECONDS)
+        } catch (_:  Throwable) {
+            NotificationHelper.pushNotification(
+                application.getString(R.string.app_name),
+                application.getString(R.string.service_killed_by_vendor_notification),
+                NotificationHelper.CHANNEL_DEFAULT_ID
             )
-        } else {
-            // Older versions do not require to specify the `foregroundServiceType`
-            startForeground(NOTIFICATION_ID, builder.build())
         }
-
-        scheduler.scheduleWithFixedDelay(refreshTask, INITIAL_INTERVAL, RESTART_INTERVAL, TimeUnit.MILLISECONDS)
 
         return START_STICKY
     }
 
     override fun onDestroy() {
+        super.onDestroy()
         pipeline?.disconnect()
+        scheduler.shutdown()
     }
 
     override fun onBind(intent: Intent?): IBinder? {

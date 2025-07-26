@@ -19,11 +19,14 @@ package cc.sovellus.vrcaa.ui.screen.gallery
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import android.net.Uri
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import cc.sovellus.vrcaa.App
+import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.api.vrchat.http.models.File
 import cc.sovellus.vrcaa.manager.ApiManager.api
+import cc.sovellus.vrcaa.manager.CacheManager
 import kotlinx.coroutines.launch
 
 class IconGalleryScreenModel : StateScreenModel<IconGalleryScreenModel.IconGalleryState>(IconGalleryState.Init) {
@@ -42,11 +45,12 @@ class IconGalleryScreenModel : StateScreenModel<IconGalleryScreenModel.IconGalle
     private var files: ArrayList<File> = arrayListOf()
 
     init {
-        mutableState.value = IconGalleryState.Loading
-        fetchAvatars()
+        fetchIcons()
     }
 
-    private fun fetchAvatars() {
+    private fun fetchIcons() {
+        mutableState.value = IconGalleryState.Loading
+        App.setLoadingText(R.string.loading_text_icons)
         screenModelScope.launch {
             files = api.files.fetchFilesByTag("icon")
 
@@ -54,6 +58,18 @@ class IconGalleryScreenModel : StateScreenModel<IconGalleryScreenModel.IconGalle
                 mutableState.value = IconGalleryState.Empty
             else
                 mutableState.value = IconGalleryState.Result(files)
+        }
+    }
+
+    fun uploadFile(uri: Uri?) {
+        CacheManager.getProfile()?.let { profile ->
+            uri?.let {
+                screenModelScope.launch {
+                    api.files.uploadImage("icon", uri)?.let {
+                        fetchIcons()
+                    }
+                }
+            }
         }
     }
 }

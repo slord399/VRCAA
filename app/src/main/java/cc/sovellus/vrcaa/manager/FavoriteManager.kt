@@ -23,6 +23,9 @@ import cc.sovellus.vrcaa.api.vrchat.http.interfaces.IFavorites.FavoriteType
 import cc.sovellus.vrcaa.api.vrchat.http.models.FavoriteLimits
 import cc.sovellus.vrcaa.base.BaseManager
 import cc.sovellus.vrcaa.manager.ApiManager.api
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 object FavoriteManager : BaseManager<Any>() {
 
@@ -50,52 +53,66 @@ object FavoriteManager : BaseManager<Any>() {
 
     private var tagToGroupMetadataMap = mutableStateMapOf<String, FavoriteGroupMetadata>()
 
-    suspend fun refresh()
-    {
+    suspend fun refresh() = coroutineScope {
         favoriteLimits = api.favorites.fetchLimits()
 
-        // populate default lists
         favoriteLimits?.let {
-            for (i in 0..<it.maxFavoriteGroups.world)
-                worldList["worlds${i+1}"] = SnapshotStateList()
-
-            for (i in 0..<it.maxFavoriteGroups.avatar)
-                avatarList["avatars${i+1}"] = SnapshotStateList()
-
-            // This is just ...fucked up.
-            for (i in 0..<it.maxFavoriteGroups.friend)
-                friendList["group_${i}"] = SnapshotStateList()
-        }
-
-        val worldGroups = api.favorites.fetchFavoriteGroups(FavoriteType.FAVORITE_WORLD)
-
-        worldGroups?.forEach { group ->
-            val worlds = api.favorites.fetchFavoriteWorlds(group.name)
-            worlds.forEach { favorite ->
-                worldList[group.name]?.add(FavoriteMetadata(favorite.id, favorite.favoriteId, favorite.name, favorite.thumbnailImageUrl))
+            repeat(it.maxFavoriteGroups.world) { i ->
+                worldList["worlds${i + 1}"] = SnapshotStateList()
             }
-            tagToGroupMetadataMap[group.name] = FavoriteGroupMetadata(group.id, group.name, group.type, group.displayName, group.visibility, worlds.size)
-        }
-
-        val avatarGroups = api.favorites.fetchFavoriteGroups(FavoriteType.FAVORITE_AVATAR)
-
-        avatarGroups?.forEach { group ->
-            val avatars = api.favorites.fetchFavoriteAvatars(group.name)
-            avatars.forEach { favorite ->
-                avatarList[group.name]?.add(FavoriteMetadata(favorite.id, favorite.favoriteId, favorite.name, favorite.thumbnailImageUrl))
+            repeat(it.maxFavoriteGroups.avatar) { i ->
+                avatarList["avatars${i + 1}"] = SnapshotStateList()
             }
-            tagToGroupMetadataMap[group.name] = FavoriteGroupMetadata(group.id, group.name, group.type, group.displayName, group.visibility, avatars.size)
-        }
-
-        val friendGroups = api.favorites.fetchFavoriteGroups(FavoriteType.FAVORITE_FRIEND)
-
-        friendGroups?.forEach { group ->
-            val friends = api.favorites.fetchFavorites(FavoriteType.FAVORITE_FRIEND, group.name)
-            friends.forEach { friend ->
-                friendList[group.name]?.add(FavoriteMetadata(id = friend.favoriteId, favoriteId = friend.id))
+            repeat(it.maxFavoriteGroups.friend) { i ->
+                friendList["group_$i"] = SnapshotStateList()
             }
-            tagToGroupMetadataMap[group.name] = FavoriteGroupMetadata(group.id, group.name, group.type, group.displayName, group.visibility, friends.size)
         }
+
+        val worldGroups = async { api.favorites.fetchFavoriteGroups(FavoriteType.FAVORITE_WORLD) }.await()
+        val avatarGroups = async { api.favorites.fetchFavoriteGroups(FavoriteType.FAVORITE_AVATAR) }.await()
+        val friendGroups = async { api.favorites.fetchFavoriteGroups(FavoriteType.FAVORITE_FRIEND) }.await()
+
+        worldGroups?.map { group ->
+            async {
+                val worlds = api.favorites.fetchFavoriteWorlds(group.name)
+                val metadataList = worlds.map {
+                    FavoriteMetadata(it.id, it.favoriteId, it.name, it.thumbnailImageUrl)
+                }
+
+                worldList[group.name]?.addAll(metadataList)
+                tagToGroupMetadataMap[group.name] = FavoriteGroupMetadata(
+                    group.id, group.name, group.type, group.displayName, group.visibility, metadataList.size
+                )
+            }
+        }?.awaitAll()
+
+        avatarGroups?.map { group ->
+            async {
+                val avatars = api.favorites.fetchFavoriteAvatars(group.name)
+                val metadataList = avatars.map {
+                    FavoriteMetadata(it.id, it.favoriteId, it.name, it.thumbnailImageUrl)
+                }
+
+                avatarList[group.name]?.addAll(metadataList)
+                tagToGroupMetadataMap[group.name] = FavoriteGroupMetadata(
+                    group.id, group.name, group.type, group.displayName, group.visibility, metadataList.size
+                )
+            }
+        }?.awaitAll()
+
+        friendGroups?.map { group ->
+            async {
+                val friends = api.favorites.fetchFavorites(FavoriteType.FAVORITE_FRIEND, group.name)
+                val metadataList = friends.map {
+                    FavoriteMetadata(id = it.favoriteId, favoriteId = it.id)
+                }
+
+                friendList[group.name]?.addAll(metadataList)
+                tagToGroupMetadataMap[group.name] = FavoriteGroupMetadata(
+                    group.id, group.name, group.type, group.displayName, group.visibility, metadataList.size
+                )
+            }
+        }?.awaitAll()
     }
 
     fun getAvatarList(): SnapshotStateMap<String, SnapshotStateList<FavoriteMetadata>> {
@@ -218,66 +235,72 @@ object FavoriteManager : BaseManager<Any>() {
     }
 
     suspend fun addFavorite(type: FavoriteType, id: String, tag: String, metadata: FavoriteMetadata?): Boolean {
+        try {
+            val result = api.favorites.addFavorite(type, id, tag)
 
-        val result = api.favorites.addFavorite(type, id, tag)
-
-        tagToGroupMetadataMap[tag]?.let { groupMetadata ->
-            groupMetadata.size += 1
-        }
-
-        result?.let {
-            when (type) {
-                FavoriteType.FAVORITE_WORLD -> {
-                    metadata?.let {
-                        metadata.favoriteId = result.favoriteId
-                        worldList[tag]?.add(metadata)
-                    }
-                }
-                FavoriteType.FAVORITE_AVATAR -> {
-                    metadata?.let {
-                        metadata.favoriteId = result.favoriteId
-                        avatarList[tag]?.add(metadata)
-                    }
-                }
-                FavoriteType.FAVORITE_FRIEND -> {
-                    friendList[tag]?.add(FavoriteMetadata(id = id, favoriteId = result.id))
-                }
-                else -> {}
+            tagToGroupMetadataMap[tag]?.let { groupMetadata ->
+                groupMetadata.size += 1
             }
-        }
 
-        return result != null
+            result?.let {
+                when (type) {
+                    FavoriteType.FAVORITE_WORLD -> {
+                        metadata?.let {
+                            metadata.favoriteId = result.favoriteId
+                            worldList[tag]?.add(metadata)
+                        }
+                    }
+                    FavoriteType.FAVORITE_AVATAR -> {
+                        metadata?.let {
+                            metadata.favoriteId = result.favoriteId
+                            avatarList[tag]?.add(metadata)
+                        }
+                    }
+                    FavoriteType.FAVORITE_FRIEND -> {
+                        friendList[tag]?.add(FavoriteMetadata(id = id, favoriteId = result.id))
+                    }
+                    else -> {}
+                }
+            }
+
+            return result != null
+        } catch (_: Throwable) {
+            return false
+        }
     }
 
     suspend fun removeFavorite(type: FavoriteType, id: String): Boolean {
+        try {
+            val favorite = getFavoriteId(type, id)
+            favorite.first?.let { favoriteId ->
+                val result = api.favorites.removeFavorite(favoriteId)
+                if (result)
+                {
+                    when (type) {
+                        FavoriteType.FAVORITE_WORLD -> {
+                            worldList[favorite.second]?.removeIf { it.id == id }
+                        }
+                        FavoriteType.FAVORITE_AVATAR -> {
+                            avatarList[favorite.second]?.removeIf { it.id == id }
+                        }
+                        FavoriteType.FAVORITE_FRIEND -> {
+                            friendList[favorite.second]?.removeIf { it.id == id }
+                        }
 
-        val favorite = getFavoriteId(type, id)
-        favorite.first?.let { favoriteId ->
-            val result = api.favorites.removeFavorite(favoriteId)
-            if (result)
-            {
-                when (type) {
-                    FavoriteType.FAVORITE_WORLD -> {
-                        worldList[favorite.second]?.removeIf { it.id == id }
-                    }
-                    FavoriteType.FAVORITE_AVATAR -> {
-                        avatarList[favorite.second]?.removeIf { it.id == id }
-                    }
-                    FavoriteType.FAVORITE_FRIEND -> {
-                        friendList[favorite.second]?.removeIf { it.id == id }
+                        FavoriteType.FAVORITE_NONE -> { }
                     }
 
-                    FavoriteType.FAVORITE_NONE -> { }
+                    tagToGroupMetadataMap[favorite.second]?.let { groupMetadata ->
+                        groupMetadata.size -= 1
+                    }
+
                 }
-
-                tagToGroupMetadataMap[favorite.second]?.let { groupMetadata ->
-                    groupMetadata.size -= 1
-                }
-
+                return result
             }
-            return result
+            return false
+        } catch (_: Throwable) {
+            return false
         }
-        return false
     }
 
     fun getMaximumFavoritesFromTag(tag: String): Int {

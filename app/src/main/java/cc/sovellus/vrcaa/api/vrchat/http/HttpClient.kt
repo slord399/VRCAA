@@ -19,6 +19,7 @@ package cc.sovellus.vrcaa.api.vrchat.http
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import android.net.Uri
 import android.widget.Toast
 import cc.sovellus.vrcaa.App
 import cc.sovellus.vrcaa.BuildConfig
@@ -31,6 +32,7 @@ import cc.sovellus.vrcaa.api.vrchat.http.interfaces.IAvatars
 import cc.sovellus.vrcaa.api.vrchat.http.interfaces.IFavorites
 import cc.sovellus.vrcaa.api.vrchat.http.interfaces.IFavorites.FavoriteType
 import cc.sovellus.vrcaa.api.vrchat.http.interfaces.IFiles
+import cc.sovellus.vrcaa.api.vrchat.http.interfaces.IFiles.ImageAspectRatio
 import cc.sovellus.vrcaa.api.vrchat.http.interfaces.IFriends
 import cc.sovellus.vrcaa.api.vrchat.http.interfaces.IGroups
 import cc.sovellus.vrcaa.api.vrchat.http.interfaces.IInstances
@@ -88,13 +90,13 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import okhttp3.Headers
-import kotlin.coroutines.CoroutineContext
+import java.time.LocalDateTime
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 class HttpClient : BaseClient(), CoroutineScope {
 
-    override val coroutineContext: CoroutineContext = SupervisorJob() + Dispatchers.Main
+    override val coroutineContext =  Dispatchers.IO + SupervisorJob()
 
     private val context: Context = App.getContext()
     private val preferences: SharedPreferences = context.getSharedPreferences(App.PREFERENCES_NAME, MODE_PRIVATE)
@@ -145,7 +147,7 @@ class HttpClient : BaseClient(), CoroutineScope {
                 if (BuildConfig.DEBUG)
                     throw RuntimeException("You're doing actions too quick! Please calm down.")
 
-                launch {
+                launch(Dispatchers.Main) {
                     Toast.makeText(
                         context,
                         "You're doing actions too quick! Please calm down.",
@@ -158,13 +160,23 @@ class HttpClient : BaseClient(), CoroutineScope {
                     throw RuntimeException("Invalid method used for request, make sure you're using a supported method.")
             }
             is Result.InvalidRequest -> {
+                try {
+                    val reason = Gson().fromJson(result.body, ErrorResponse::class.java).error.message
 
-                val reason = Gson().fromJson(result.body, ErrorResponse::class.java).error.message
-
-                launch {
+                    launch(Dispatchers.Main) {
+                        Toast.makeText(
+                            context,
+                            "API returned (400): $reason",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                } catch (_: Throwable) { }
+            }
+            is Result.GenericException -> {
+                launch(Dispatchers.Main) {
                     Toast.makeText(
                         context,
-                        "API returned (400): $reason",
+                        "API request threw unknown exception!\n${result.exception.message}\n\n",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -1337,6 +1349,74 @@ class HttpClient : BaseClient(), CoroutineScope {
                 }
             }
         }
+
+        override suspend fun uploadImage(tag: String, file: Uri, aspectRatio: ImageAspectRatio): File? {
+            val headers = Headers.Builder()
+                .add("User-Agent", Config.API_USER_AGENT)
+
+            val fields: MutableMap<String, String> = mutableMapOf("tag" to tag)
+
+            if (aspectRatio == ImageAspectRatio.IMAGE_ASPECT_RATIO_SQUARE)
+                fields.put("maskTag", "square")
+
+            val result = doRequestUpload(
+                App.getContext(),
+                url = "${Config.API_BASE_URL}/file/image",
+                fileUri = file,
+                formFields = fields,
+                headers = headers
+            )
+
+            return when (result) {
+                is Result.Succeeded -> {
+                    Gson().fromJson(result.body, File::class.java)
+                }
+                is Result.NotModified -> {
+                    null
+                }
+                is Result.Forbidden -> {
+                    null
+                }
+                else -> {
+                    handleExceptions(result)
+                    return null
+                }
+            }
+        }
+
+        override suspend fun uploadEmoji(
+            type: String,
+            file: Uri
+        ): File? {
+            val headers = Headers.Builder()
+                .add("User-Agent", Config.API_USER_AGENT)
+
+            val fields: MutableMap<String, String> = mutableMapOf("tag" to "emoji", "maskTag" to "square", "frames" to "1", "framesOverTime" to "1", "animationStyle" to type)
+
+            val result = doRequestUpload(
+                App.getContext(),
+                url = "${Config.API_BASE_URL}/file/image",
+                fileUri = file,
+                formFields = fields,
+                headers = headers
+            )
+
+            return when (result) {
+                is Result.Succeeded -> {
+                    Gson().fromJson(result.body, File::class.java)
+                }
+                is Result.NotModified -> {
+                    null
+                }
+                is Result.Forbidden -> {
+                    null
+                }
+                else -> {
+                    handleExceptions(result)
+                    return null
+                }
+            }
+        }
     }
 
     val user = object : IUser {
@@ -1510,6 +1590,39 @@ class HttpClient : BaseClient(), CoroutineScope {
         override suspend fun editPrint(printId: String): Print? {
             return null // STUB!
         }
+
+        override suspend fun uploadPrint(
+            file: Uri,
+            note: String,
+            timestamp: LocalDateTime
+        ): Print? {
+            val headers = Headers.Builder()
+                .add("User-Agent", Config.API_USER_AGENT)
+
+            val result = doRequestUpload(
+                App.getContext(),
+                url = "${Config.API_BASE_URL}/prints",
+                fileUri = file,
+                formFields = mapOf("note" to note, "timestamp" to timestamp.toString()),
+                headers = headers
+            )
+
+            return when (result) {
+                is Result.Succeeded -> {
+                    Gson().fromJson(result.body, Print::class.java)
+                }
+                is Result.NotModified -> {
+                    null
+                }
+                is Result.Forbidden -> {
+                    null
+                }
+                else -> {
+                    handleExceptions(result)
+                    return null
+                }
+            }
+        }
     }
 
     val inventory = object : IInventory {
@@ -1540,10 +1653,10 @@ class HttpClient : BaseClient(), CoroutineScope {
 
             return when (result) {
                 is Result.Succeeded -> {
-                    if (result.body == "[]")
-                        return items
-
                     val json = Gson().fromJson(result.body, Inventory::class.java)
+
+                    if (json.data.isEmpty())
+                        return items
 
                     json?.data?.forEach { avatar ->
                         items.add(avatar)
@@ -1591,10 +1704,10 @@ class HttpClient : BaseClient(), CoroutineScope {
 
             return when (result) {
                 is Result.Succeeded -> {
-                    if (result.body == "[]")
-                        return items
-
                     val json = Gson().fromJson(result.body, Inventory::class.java)
+
+                    if (json.data.isEmpty())
+                        return items
 
                     json?.data?.forEach { avatar ->
                         items.add(avatar)
@@ -1642,10 +1755,10 @@ class HttpClient : BaseClient(), CoroutineScope {
 
             return when (result) {
                 is Result.Succeeded -> {
-                    if (result.body == "[]")
-                        return items
-
                     val json = Gson().fromJson(result.body, Inventory::class.java)
+
+                    if (json.data.isEmpty())
+                        return items
 
                     json?.data?.forEach { avatar ->
                         items.add(avatar)

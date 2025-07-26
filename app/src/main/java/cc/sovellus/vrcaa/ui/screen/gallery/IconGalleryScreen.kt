@@ -16,6 +16,10 @@
 
 package cc.sovellus.vrcaa.ui.screen.gallery
 
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,7 +34,9 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -41,6 +47,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,20 +56,25 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.glance.LocalContext
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.uniqueScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import cc.sovellus.vrcaa.App
 import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.api.vrchat.http.models.File
 import cc.sovellus.vrcaa.extension.columnCountOption
 import cc.sovellus.vrcaa.extension.fixedColumnSize
-import cc.sovellus.vrcaa.ui.components.dialog.ImageZoomDialog
+import cc.sovellus.vrcaa.manager.ApiManager.api
+import cc.sovellus.vrcaa.manager.CacheManager
+import cc.sovellus.vrcaa.ui.components.dialog.ImagePreviewDialog
 import cc.sovellus.vrcaa.ui.screen.misc.LoadingIndicatorScreen
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
+import kotlinx.coroutines.launch
 
 class IconGalleryScreen : Screen {
 
@@ -98,7 +110,7 @@ class IconGalleryScreen : Screen {
                         }
                     },
                     title = {
-                        Text(text = "User Icons")
+                        Text(text = stringResource(R.string.icon_gallery_page_title))
                     }
                 )
             },
@@ -126,6 +138,12 @@ class IconGalleryScreen : Screen {
 
         var previewFile by remember { mutableStateOf<File.Version.File?>(null) }
 
+        val pickImage = rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocument()
+        ) { uri: Uri? ->
+            model.uploadFile(uri)
+        }
+
         Scaffold(
             modifier = Modifier.blur(if (previewFile != null) { 100.dp } else { 0.dp }),
             topBar = {
@@ -139,7 +157,34 @@ class IconGalleryScreen : Screen {
                         }
                     },
                     title = {
-                        Text(text = "User Icons") // stringResource(R.string.avatars_page_title)
+                        Text(text = stringResource(R.string.icon_gallery_page_title))
+                    }
+                )
+            },
+            floatingActionButton = {
+                ExtendedFloatingActionButton(
+                    modifier = Modifier.padding(4.dp),
+                    onClick = {
+                        CacheManager.getProfile()?.let { profile ->
+                            if (profile.tags.contains("system_supporter")) {
+                                pickImage.launch(arrayOf("image/png", "image/jpeg", "image/gif"))
+                            } else {
+                                Toast.makeText(
+                                    App.getContext(),
+                                    App.getContext().getString(R.string.misc_no_premium_subscription),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null
+                        )
+                    },
+                    text = {
+                        Text(stringResource(R.string.icon_gallery_page_button_upload))
                     }
                 )
             },
@@ -189,15 +234,15 @@ class IconGalleryScreen : Screen {
                         }
                     )
                 }
-
-                previewFile?.let {
-                    ImageZoomDialog(
-                        url = it.url,
-                        name = it.fileName,
-                        onDismiss = { previewFile = null }
-                    )
-                }
             }
         )
+
+        previewFile?.let {
+            ImagePreviewDialog(
+                url = it.url,
+                name = it.fileName,
+                onDismiss = { previewFile = null }
+            )
+        }
     }
 }

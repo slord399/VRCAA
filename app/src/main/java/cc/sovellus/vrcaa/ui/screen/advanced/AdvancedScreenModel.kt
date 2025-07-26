@@ -31,23 +31,19 @@ import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.extension.networkLogging
 import cc.sovellus.vrcaa.service.PipelineService
 import androidx.core.net.toUri
+import cc.sovellus.vrcaa.manager.DatabaseManager
+import java.io.File
 
 class AdvancedScreenModel : ScreenModel {
 
     private val context: Context = App.getContext()
-    private val preferences: SharedPreferences = context.getSharedPreferences(App.PREFERENCES_NAME, MODE_PRIVATE)
+    private val preferences: SharedPreferences = App.getPreferences()
 
     val networkLoggingMode = mutableStateOf(preferences.networkLogging)
 
     fun toggleLogging() {
         networkLoggingMode.value = !networkLoggingMode.value
         preferences.networkLogging = !preferences.networkLogging
-
-        Toast.makeText(
-            context,
-            context.getString(R.string.developer_mode_toggle_toast), // TODO: rename translation string
-            Toast.LENGTH_SHORT
-        ).show()
     }
 
     @SuppressLint("BatteryLife")
@@ -75,5 +71,19 @@ class AdvancedScreenModel : ScreenModel {
     fun killBackgroundService() {
         val intent = Intent(context, PipelineService::class.java)
         context.stopService(intent)
+    }
+
+    fun deleteDatabase() {
+        DatabaseManager.db.close()
+
+        val file = File(context.getDatabasePath("vrcaa.db").path)
+        file.delete()
+
+        val pm = context.packageManager
+        val intent = pm.getLaunchIntentForPackage(context.packageName)
+        val mainIntent = Intent.makeRestartActivityTask(intent?.component)
+        context.startActivity(mainIntent)
+
+        Runtime.getRuntime().exit(0)
     }
 }

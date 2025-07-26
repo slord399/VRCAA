@@ -25,17 +25,19 @@ import cc.sovellus.vrcaa.api.vrchat.http.models.User
 import cc.sovellus.vrcaa.manager.CacheManager
 import cc.sovellus.vrcaa.manager.CacheManager.WorldCache
 import cc.sovellus.vrcaa.manager.FriendManager
+import cc.sovellus.vrcaa.ui.screen.home.HomeScreenModel.HomeState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-sealed class HomeState {
-    data object Init : HomeState()
-    data object Loading : HomeState()
-    data object Result : HomeState()
-}
-
 class HomeScreenModel : StateScreenModel<HomeState>(HomeState.Init) {
+
+    sealed class HomeState {
+        data object Init : HomeState()
+        data object Loading : HomeState()
+        data object Result : HomeState()
+    }
 
     private var friendsListFlow = MutableStateFlow(mutableStateListOf<Friend>())
     var friendsList = friendsListFlow.asStateFlow()
@@ -50,8 +52,8 @@ class HomeScreenModel : StateScreenModel<HomeState>(HomeState.Init) {
     }
 
     private val cacheListener = object : CacheManager.CacheListener {
-        override fun recentlyVisitedUpdated(worlds: MutableList<WorldCache>) {
-            recentlyVisitedFlow.value = worlds.toMutableStateList()
+        override fun updateRecentlyVisitedWorlds(worlds: List<WorldCache>) {
+            recentlyVisitedFlow.update { worlds.toMutableStateList() }
         }
 
         override fun startCacheRefresh() {
@@ -62,8 +64,6 @@ class HomeScreenModel : StateScreenModel<HomeState>(HomeState.Init) {
             fetchContent()
             mutableState.value = HomeState.Result
         }
-
-        override fun profileUpdated(profile: User) {}
     }
 
     init {
@@ -80,9 +80,7 @@ class HomeScreenModel : StateScreenModel<HomeState>(HomeState.Init) {
     }
 
     private fun fetchContent() {
-        screenModelScope.launch {
-            friendsListFlow.value = FriendManager.getFriends().toMutableStateList()
-            recentlyVisitedFlow.value = CacheManager.getRecent().toMutableStateList()
-        }
+        friendsListFlow.value = FriendManager.getFriends().toMutableStateList()
+        recentlyVisitedFlow.value = CacheManager.getRecentWorlds().toMutableStateList()
     }
 }

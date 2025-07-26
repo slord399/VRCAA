@@ -19,9 +19,11 @@ package cc.sovellus.vrcaa.ui.screen.gallery
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import android.net.Uri
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import cc.sovellus.vrcaa.App
+import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.api.vrchat.http.models.File
 import cc.sovellus.vrcaa.manager.ApiManager.api
 import kotlinx.coroutines.launch
@@ -42,11 +44,12 @@ class GalleryScreenModel : StateScreenModel<GalleryScreenModel.GalleryState>(Gal
     private var files: ArrayList<File> = arrayListOf()
 
     init {
-        mutableState.value = GalleryState.Loading
-        fetchAvatars()
+        fetchGallery()
     }
 
-    private fun fetchAvatars() {
+    private fun fetchGallery() {
+        mutableState.value = GalleryState.Loading
+        App.setLoadingText(R.string.loading_text_gallery)
         screenModelScope.launch {
             files = api.files.fetchFilesByTag("gallery")
 
@@ -54,6 +57,16 @@ class GalleryScreenModel : StateScreenModel<GalleryScreenModel.GalleryState>(Gal
                 mutableState.value = GalleryState.Empty
             else
                 mutableState.value = GalleryState.Result(files)
+        }
+    }
+
+    fun uploadFile(uri: Uri?) {
+        uri?.let {
+            screenModelScope.launch {
+                api.files.uploadImage("gallery", uri)?.let {
+                    fetchGallery()
+                }
+            }
         }
     }
 }

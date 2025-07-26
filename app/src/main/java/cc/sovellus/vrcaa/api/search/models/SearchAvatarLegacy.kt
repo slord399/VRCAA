@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-package cc.sovellus.vrcaa.extension
+package cc.sovellus.vrcaa.api.search.models
 
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import kotlin.time.Duration.Companion.milliseconds
+import com.google.gson.annotations.SerializedName
 
-internal val LocalDateTime.milliseconds: Long
-    get() { return this.toEpochSecond(ZoneOffset.UTC).milliseconds.inWholeMilliseconds }
+data class SearchAvatarLegacy(
+    @SerializedName("id")
+    val id: String,
+    @SerializedName("imageUrl")
+    val imageUrl: String?,
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("authorId")
+    val authorId: String = "",
+    @SerializedName("authorName")
+    val authorName: String = "",
+)
