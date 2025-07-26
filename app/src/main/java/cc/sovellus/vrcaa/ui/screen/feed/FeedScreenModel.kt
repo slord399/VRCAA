@@ -26,6 +26,7 @@ import cc.sovellus.vrcaa.manager.FeedManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class FeedScreenModel : StateScreenModel<FeedScreenModel.FeedState>(FeedState.Init) {
@@ -40,8 +41,8 @@ class FeedScreenModel : StateScreenModel<FeedScreenModel.FeedState>(FeedState.In
     var feed = feedStateFlow.asStateFlow()
 
     private val listener = object : FeedManager.FeedListener {
-        override fun onReceiveUpdate(list: MutableList<FeedManager.Feed>) {
-            feedStateFlow.value = list.toMutableStateList()
+        override fun onReceiveUpdate(list: List<FeedManager.Feed>) {
+            feedStateFlow.update { list.toMutableStateList() }
         }
     }
 
@@ -51,7 +52,7 @@ class FeedScreenModel : StateScreenModel<FeedScreenModel.FeedState>(FeedState.In
         }
 
         override fun endCacheRefresh() {
-            feedStateFlow.value = FeedManager.getFeed().toMutableStateList()
+            feedStateFlow.update { FeedManager.getFeed().toMutableStateList() }
             mutableState.value = FeedState.Result
         }
     }
@@ -63,7 +64,7 @@ class FeedScreenModel : StateScreenModel<FeedScreenModel.FeedState>(FeedState.In
 
         if (CacheManager.isBuilt())
         {
-            feedStateFlow.value = FeedManager.getFeed().toMutableStateList()
+            feedStateFlow.update { FeedManager.getFeed().toMutableStateList() }
             mutableState.value = FeedState.Result
         }
     }
