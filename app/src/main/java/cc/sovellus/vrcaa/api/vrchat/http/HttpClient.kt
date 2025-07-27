@@ -794,6 +794,38 @@ class HttpClient : BaseClient(), CoroutineScope {
             }
         }
 
+        override suspend fun fetchFavoriteGroupsByUserId(
+            userId: String,
+            type: FavoriteType
+        ): FavoriteGroups? {
+            val headers = Headers.Builder()
+                .add("User-Agent", Config.API_USER_AGENT)
+
+            val dTypeString = when (type) {
+                FavoriteType.FAVORITE_WORLD -> "world"
+                FavoriteType.FAVORITE_AVATAR -> "avatar"
+                FavoriteType.FAVORITE_FRIEND -> "friend"
+                FavoriteType.FAVORITE_NONE -> ""
+            }
+
+            val result = doRequest(
+                method = "GET",
+                url = "${Config.API_BASE_URL}/favorite/groups?type=${dTypeString}&ownerId=${userId}&visibility=public",
+                headers = headers,
+                body = null
+            )
+
+            when (result) {
+                is Result.Succeeded -> {
+                    return Gson().fromJson(result.body, FavoriteGroups::class.java)
+                }
+                else -> {
+                    handleExceptions(result)
+                    return null
+                }
+            }
+        }
+
         override suspend fun addFavorite(
             type: FavoriteType,
             favoriteId: String,
@@ -921,6 +953,56 @@ class HttpClient : BaseClient(), CoroutineScope {
             val result = doRequest(
                 method = "GET",
                 url = "${Config.API_BASE_URL}/favorites?type=${dTypeString}&n=${n}&offset=${offset}&tag=${tag}",
+                headers = headers,
+                body = null
+            )
+
+            return when (result) {
+                is Result.Succeeded -> {
+                    if (result.body == "[]")
+                        return favorites
+
+                    val json = Gson().fromJson(result.body, Favorites::class.java)
+
+                    json?.forEach { favorite ->
+                        favorites.add(favorite)
+                    }
+
+                    fetchFavorites(type, tag, n, offset + n, favorites)
+                }
+
+                is Result.NotModified -> {
+                    return favorites
+                }
+
+                else -> {
+                    handleExceptions(result)
+                    return arrayListOf()
+                }
+            }
+        }
+
+        override suspend fun fetchFavoritesByUserId(
+            userId: String,
+            type: FavoriteType,
+            tag: String,
+            n: Int,
+            offset: Int,
+            favorites: ArrayList<Favorite>
+        ): ArrayList<Favorite> {
+            val headers = Headers.Builder()
+                .add("User-Agent", Config.API_USER_AGENT)
+
+            val dTypeString = when (type) {
+                FavoriteType.FAVORITE_WORLD -> "world"
+                FavoriteType.FAVORITE_AVATAR -> "avatar"
+                FavoriteType.FAVORITE_FRIEND -> "friend"
+                FavoriteType.FAVORITE_NONE -> ""
+            }
+
+            val result = doRequest(
+                method = "GET",
+                url = "${Config.API_BASE_URL}/favorites?type=${dTypeString}&n=${n}&offset=${offset}&tag=${tag}&ownerId=${userId}&visibility=public",
                 headers = headers,
                 body = null
             )
