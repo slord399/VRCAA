@@ -1,3 +1,8 @@
+@file:OptIn(ExperimentalEncodingApi::class)
+
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -7,14 +12,14 @@ plugins {
 
 android {
     namespace = "cc.sovellus.vrcaa"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "cc.sovellus.vrcaa"
         minSdk = 27
-        targetSdk = 35
-        versionCode = 200604
-        versionName = "2.6.4"
+        targetSdk = 36
+        versionCode = 200605
+        versionName = "2.6.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -29,14 +34,33 @@ android {
         buildConfigField("String", "KOFI_URL", "\"https://ko-fi.com/Nyabsi\"")
     }
 
+    signingConfigs {
+        create("release") {
+            val storeFileEnv = System.getenv("SIGNING_STORE_FILE")
+            val storePasswordEnv = System.getenv("SIGNING_STORE_PASSWORD")
+            val keyAliasEnv = System.getenv("SIGNING_KEY_ALIAS")
+            val keyPasswordEnv = System.getenv("SIGNING_KEY_PASSWORD")
+
+            if (storeFileEnv != null && File(storeFileEnv).exists()) {
+                storeFile = file(storeFileEnv)
+                storePassword = storePasswordEnv
+                keyAlias = keyAliasEnv
+                keyPassword = keyPasswordEnv
+            } else {
+                println("Warning: Release signing configuration not fully set up from environment variables.")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
@@ -119,7 +143,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose-android:2.9.2")
     implementation("androidx.appcompat:appcompat:1.7.1")
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2025.07.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
@@ -145,4 +169,5 @@ dependencies {
     implementation ("androidx.glance:glance-material3:1.1.1@aar")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     implementation("net.thauvin.erik.urlencoder:urlencoder-lib:1.6.0")
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
 }
