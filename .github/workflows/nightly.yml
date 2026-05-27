@@ -1,4 +1,4 @@
-name: Build & Publish Nightly
+name: Build & Publish Transcript
 
 on:
   # schedule:
@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [nightly, quest, pico]
+        platform: [transcript, quest, pico]
 
     steps:
     - uses: actions/checkout@v6
@@ -68,10 +68,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-    - name: Download Nightly APK
+    - name: Download Transcript APK
       uses: actions/download-artifact@v7
       with:
-        name: VRCAA-nightly-signed.apk
+        name: VRCAA-transcript-signed.apk
         path: .
 
     - name: Download Quest APK
