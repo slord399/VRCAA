@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [transcript, quest, pico]
+        platform: [nightly, quest, pico]
 
     steps:
     - uses: actions/checkout@v6
@@ -71,7 +71,7 @@ jobs:
     - name: Download Transcript APK
       uses: actions/download-artifact@v7
       with:
-        name: VRCAA-transcript-signed.apk
+        name: VRCAA-nightly-signed.apk
         path: .
 
     - name: Download Quest APK
@@ -94,6 +94,6 @@ jobs:
         prerelease: true
         title: "Transcript"
         files: |
-          VRCAA-transcript-signed.apk
+          VRCAA-nightly-signed.apk
           VRCAA-quest-signed.apk
           VRCAA-pico-signed.apk
