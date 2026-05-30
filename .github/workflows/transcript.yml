@@ -91,7 +91,7 @@ jobs:
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "transcript"
-        prerelease: true
+        prerelease: false
         title: "Transcript"
         files: |
           VRCAA-nightly-signed.apk
