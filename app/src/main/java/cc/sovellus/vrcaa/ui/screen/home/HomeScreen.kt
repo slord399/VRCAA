@@ -43,7 +43,6 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cc.sovellus.vrcaa.R
 import cc.sovellus.vrcaa.helper.StatusHelper
 import cc.sovellus.vrcaa.manager.CacheManager
-import cc.sovellus.vrcaa.manager.RecommendationManager
 import cc.sovellus.vrcaa.ui.components.layout.HorizontalRow
 import cc.sovellus.vrcaa.ui.components.layout.RoundedRowItem
 import cc.sovellus.vrcaa.ui.components.layout.RowItem
@@ -77,6 +76,7 @@ class HomeScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val friends = model.friendsList.collectAsState().value
         val recent = model.recentlyVisited.collectAsState().value
+        val cachedWorlds = CacheManager.worldList.collectAsState().value
 
         LazyColumn(
             modifier = Modifier
@@ -185,12 +185,13 @@ class HomeScreen : Screen {
                         items(
                             friendLocations.distinctBy { it.location.split(':')[0] }
                         ) { friend ->
-                            val world = CacheManager.getWorld(friend.location.split(':')[0])
+                            val worldId = friend.location.split(':')[0]
+                            val world = cachedWorlds.find { it.id == worldId }
                             RowItemWithFriends(
-                                name = world.name,
-                                url = world.thumbnailUrl,
+                                name = world?.name ?: "???",
+                                url = world?.thumbnailUrl ?: "",
                                 friends = friends.filter { it.location == friend.location },
-                                onClick = { navigator.parent?.parent?.push(WorldScreen(world.id)) }
+                                onClick = { navigator.parent?.parent?.push(WorldScreen(worldId)) }
                             )
                         }
                     }
@@ -198,7 +199,8 @@ class HomeScreen : Screen {
 
                 Spacer(modifier = Modifier.padding(4.dp))
 
-                if (model.recommendedWorlds.isEmpty()) {
+                val worlds = CacheManager.recommendedWorldsState.collectAsState()
+                if (worlds.value.isEmpty()) {
                     Text(
                         text = stringResource(R.string.home_curated_for_you),
                         style = MaterialTheme.typography.headlineSmall,
@@ -221,7 +223,7 @@ class HomeScreen : Screen {
                     HorizontalRow(
                         title = stringResource(R.string.home_curated_for_you)
                     ) {
-                        items(model.recommendedWorlds) { world ->
+                        items(worlds.value) { world ->
                             RowItem(
                                 name = world.name,
                                 url = world.imageUrl.ifEmpty { world.thumbnailImageUrl },

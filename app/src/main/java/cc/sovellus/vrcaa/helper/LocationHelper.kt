@@ -122,7 +122,9 @@ object LocationHelper {
 
         val info = parseLocationInfo(location)
 
-        val result = "${CacheManager.getWorld(info.worldId).name} #${info.instanceId} ${info.instanceType} "
+        val result = "${CacheManager.getWorld(info.worldId)?.name ?: "???"} #${info.instanceId} ${info.instanceType} "
+        if (info.groupAccessType.isNotEmpty())
+            result.append(info.groupAccessType)
         if (info.regionId.isNotEmpty()) location.append(info.regionId)
         return result
     }
